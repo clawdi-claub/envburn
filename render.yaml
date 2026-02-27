@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: envburn
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: BASE_URL
+        value: https://envburn.onrender.com
+    disk:
+      name: envburn-data
+      mountPath: /app/data
+      sizeGB: 1
+    healthCheckPath: /health
+    autoDeploy: true
