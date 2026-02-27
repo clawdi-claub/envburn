@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  envburn:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3000
+      - BASE_URL=http://localhost:3000
