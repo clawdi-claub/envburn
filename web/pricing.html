@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — EnvBurn</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    .container { max-width: 900px; width: 100%; }
+    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; text-align: center; }
+    .subtitle { text-align: center; color: #888; margin-bottom: 3rem; }
+    .pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+    }
+    .card.featured { border-color: #ff6b6b; background: rgba(255,107,107,0.1); }
+    .plan-name { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .price { font-size: 3rem; font-weight: bold; margin: 1rem 0; }
+    .price span { font-size: 1rem; color: #888; }
+    .features { list-style: none; margin: 1.5rem 0; }
+    .features li { padding: 0.5rem 0; color: #ccc; }
+    .btn {
+      background: #ff6b6b;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #ff6b6b;
+    }
+    .footer { margin-top: 3rem; text-align: center; color: #666; }
+    a { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔥 EnvBurn</h1>
+    <p class="subtitle">Simple, self-destructing secrets</p>
+    
+    <div class="pricing">
+      <div class="card">
+        <div class="plan-name">Free</div>
+        <div class="price">$0</div>
+        <ul class="features">
+          <li>10 secrets / month</li>
+          <li>24hr max expiry</li>
+          <li>1 view per secret</li>
+          <li>No signup required</li>
+        </ul>
+        <a href="/" class="btn btn-outline">Get Started</a>
+      </div>
+      
+      <div class="card featured">
+        <div class="plan-name">Pro</div>
+        <div class="price">$9<span>/mo</span></div>
+        <ul class="features">
+          <li>Unlimited secrets</li>
+          <li>7 day expiry</li>
+          <li>Custom view limits</li>
+          <li>API access</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="#" class="btn">Coming Soon</a>
+      </div>
+      
+      <div class="card">
+        <div class="plan-name">Team</div>
+        <div class="price">$29<span>/mo</span></div>
+        <ul class="features">
+          <li>Everything in Pro</li>
+          <li>Team sharing</li>
+          <li>Audit logs</li>
+          <li>CLI tool</li>
+          <li>Custom domains</li>
+        </ul>
+        <a href="#" class="btn btn-outline">Coming Soon</a>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p><a href="/">← Back to app</a></p>
+    </div>
+  </div>
+</body>
+</html>
