@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
-import { serveStatic } from '@hono/node-server/serve-static';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 import { nanoid } from 'nanoid';
 import db from './db.js';
 import { generateKey, encrypt, decrypt } from './crypto.js';
@@ -19,13 +19,13 @@ app.use('*', cors());
 app.get('/health', (c) => c.json({ status: 'ok', service: 'envburn' }));
 
 // Serve static web files
-app.use('/', serveStatic({ path: join(WEB_DIR, 'index.html') }));
-app.use('/secret', serveStatic({ path: join(WEB_DIR, 'secret.html') }));
+const indexHtml = readFileSync(join(WEB_DIR, 'index.html'), 'utf8');
+const secretHtml = readFileSync(join(WEB_DIR, 'secret.html'), 'utf8');
+const pricingHtml = (() => { try { return readFileSync(join(WEB_DIR, 'pricing.html'), 'utf8'); } catch { return null; } })();
 
-// Route for /s/:id — serves secret.html with hash preserved
-app.get('/s/:id', async (c) => {
-  return serveStatic({ path: join(WEB_DIR, 'secret.html') })(c);
-});
+app.get('/', (c) => c.html(indexHtml));
+app.get('/s/:id', (c) => c.html(secretHtml));
+if (pricingHtml) app.get('/pricing', (c) => c.html(pricingHtml));
 
 // Create a secret
 app.post('/api/secrets', async (c) => {
