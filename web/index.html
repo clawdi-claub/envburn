@@ -95,7 +95,7 @@ JWT_SECRET=your-jwt-secret"></textarea>
   </footer>
 
   <script>
-    const API_URL = 'http://localhost:3000';
+    const API_URL = window.location.origin;
 
     async function createSecret() {
       const content = document.getElementById('secretContent').value.trim();
