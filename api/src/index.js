@@ -44,7 +44,29 @@ app.get('/checkout', (c) => c.html(`<!DOCTYPE html>
   </script>
 </body>
 </html>`));
-app.get('/success', (c) => c.html('<h1>Subscription Success! Check email.</h1><p>EnvBurn/WebhookMail activated. Welcome!</p>'));
+app.post('/webhook', async (c) => {
+  const sig = c.req.header('stripe-signature');
+  const body = await c.req.text();
+  const stripe = require('stripe')(process.env.STRIPE_SK);
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET || '');
+  } catch (err) {
+    return c.text('Webhook signature verification failed.', 400);
+  }
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const resend = require('resend').Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: 'noreply@envburn.onrender.com',
+      to: session.customer_details.email,
+      subject: 'Welcome to EnvBurn Pro!',
+      html: '<h1>Subscription Success!</h1><p>Pro activated - unlimited shares. Thanks!</p>'
+    });
+  }
+  return c.text('OK', 200);
+});
+app.get('/success', (c) => c.html('<h1>Subscription Success! Check email for welcome.</h1><p>Redirecting...</p><script>window.location.href = "/dashboard";</script>'));
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok', service: 'envburn' }));
