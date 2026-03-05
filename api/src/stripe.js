@@ -43,5 +43,5 @@ export async function handleWebhook(rawBody) {
 }
 
 export function isConfigured() {
-  return !!(STRIPE_SECRET_KEY && process.env.STRIPE_ENVBURN_PRICE_ID);
+  return !!(STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID);
 }

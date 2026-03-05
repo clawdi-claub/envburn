@@ -206,7 +206,7 @@ app.post('/api/checkout', async (c) => {
   if (!isConfigured()) return c.json({ error: 'Payments not configured' }, 503);
   const { email } = await c.req.json();
   if (!email) return c.json({ error: 'Email required' }, 400);
-  const session = await createCheckoutSession(email, process.env.STRIPE_ENVBURN_PRICE_ID);
+  const session = await createCheckoutSession(email, process.env.STRIPE_PRICE_ID);
   if (session.url) return c.json({ url: session.url });
   return c.json({ error: 'Checkout failed' }, 500);
 });
