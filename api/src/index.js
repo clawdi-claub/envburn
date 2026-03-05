@@ -15,6 +15,36 @@ const WEB_DIR = join(__dirname, '..', '..', 'web');
 const app = new Hono();
 
 app.use('*', cors());
+app.get('/checkout', (c) => c.html(`<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <button id="checkout-button-envburn">Subscribe EnvBurn Pro $2/mo</button>
+  <button id="checkout-button-webhookmail">Subscribe WebhookMail Pro $3/mo</button>
+  <script>
+    const stripe = Stripe('${process.env.STRIPE_PK}');
+    document.getElementById('checkout-button-envburn').addEventListener('click', () => {
+      stripe.redirectToCheckout({
+        lineItems: [{ price: '${process.env.ENVBURN_PRO}', quantity: 1 }],
+        mode: 'subscription',
+        successUrl: '${process.env.BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}',
+        cancelUrl: '${process.env.BASE_URL}/'
+      });
+    });
+    document.getElementById('checkout-button-webhookmail').addEventListener('click', () => {
+      stripe.redirectToCheckout({
+        lineItems: [{ price: '${process.env.WEBHOOKMAIL_PRO}', quantity: 1 }],
+        mode: 'subscription',
+        successUrl: '${process.env.BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}',
+        cancelUrl: '${process.env.BASE_URL}/'
+      });
+    });
+  </script>
+</body>
+</html>`));
+app.get('/success', (c) => c.html('<h1>Subscription Success! Check email.</h1><p>EnvBurn/WebhookMail activated. Welcome!</p>'));
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok', service: 'envburn' }));
