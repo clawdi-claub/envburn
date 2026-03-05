@@ -1,10 +1,18 @@
-# 🔥 EnvBurn
+<p align="center">
+  <img src="assets/logo-200.png" alt="EnvBurn" width="120">
+</p>
 
-**Self-destructing secret sharing for developers.**
+<h1 align="center">EnvBurn</h1>
+
+<p align="center"><strong>Self-destructing secret sharing for developers.</strong></p>
+
+<p align="center">
+  <a href="https://envburn.onrender.com">envburn.onrender.com</a>
+</p>
+
+---
 
 Share API keys, `.env` files, passwords, and credentials through encrypted, self-destructing links. Zero-knowledge — your secrets are encrypted client-side before they ever touch the server.
-
-**→ [envburn.onrender.com](https://envburn.onrender.com)**
 
 ## Features
 
