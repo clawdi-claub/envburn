@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="assets/logo-200.png" alt="EnvBurn" width="120">
-</p>
-
-<h1 align="center">EnvBurn</h1>
+<h1 align="center">🔥 EnvBurn</h1>
 
 <p align="center"><strong>Self-destructing secret sharing for developers.</strong></p>
 

@@ -10,6 +10,14 @@ services:
         value: 3000
       - key: BASE_URL
         value: https://envburn.onrender.com
+      - key: STRIPE_PK
+        fromSecret: stripe-pk
+      - key: STRIPE_SK
+        fromSecret: stripe-sk
+      - key: ENVBURN_PRO
+        value: prod_U5tp5f9TgvWkBq
+      - key: WEBHOOKMAIL_PRO
+        value: prod_U5ti1ORP25xnXP
     disk:
       name: envburn-data
       mountPath: /app/data
