@@ -1,84 +1,46 @@
-# EnvBurn 🔥
+# 🔥 EnvBurn
 
-Self-destructing secret sharing for developers. Like WeTransfer, but for your `.env` files.
+**Self-destructing secret sharing for developers.**
+
+Share API keys, `.env` files, passwords, and credentials through encrypted, self-destructing links. Zero-knowledge — your secrets are encrypted client-side before they ever touch the server.
+
+**→ [envburn.onrender.com](https://envburn.onrender.com)**
 
 ## Features
 
-- 🔐 **Client-side encryption** - Your secrets are encrypted with NaCl before leaving your browser
-- ⏳ **Auto-destruct** - Links expire after viewing or when the timer runs out
-- 🚫 **Zero signup** - No accounts, no tracking, no hassle
-- 🔥 **Burn after reading** - Each secret can be set to self-destruct on first view
+- 🔐 **Client-side encryption** — NaCl encryption in your browser. The server never sees plaintext.
+- ⏳ **Auto-destruct** — Links expire after viewing or when the timer runs out
+- 🚫 **Zero signup** — No accounts, no tracking, no cookies
+- 🔥 **Burn after reading** — Secrets self-destruct on first view
+- 📊 **View limits** — Set max views before auto-burn
 
-## Quick Start
+## How It Works
 
-```bash
-# Clone and install
-git clone https://github.com/yourusername/envburn.git
-cd envburn/api
-npm install
+1. Paste your secret → encrypted in your browser with NaCl
+2. Get a shareable link (encryption key is in the URL fragment — never sent to the server)
+3. Recipient opens the link → decrypted in their browser → secret is burned
 
-# Run locally
-npm start
-```
-
-Visit http://localhost:3000
-
-## API Usage
-
-### Create a secret
+## API
 
 ```bash
-curl -X POST http://localhost:3000/api/secrets \
+# Create a secret
+curl -X POST https://envburn.onrender.com/api/secrets \
   -H "Content-Type: application/json" \
   -d '{"content": "DATABASE_URL=postgres://...", "ttl": 3600, "views": 1}'
+
+# Retrieve (and burn)
+curl "https://envburn.onrender.com/api/secrets/{id}?key={key}"
 ```
 
-Response:
-```json
-{
-  "id": "abc123",
-  "key": "encryptionKey",
-  "url": "http://localhost:3000/s/abc123#encryptionKey",
-  "expiresAt": "2026-02-27T20:56:17.000Z"
-}
-```
+## Pricing
 
-### Retrieve a secret
-
-```bash
-curl "http://localhost:3000/api/secrets/abc123?key=encryptionKey"
-```
-
-## Deployment
-
-### Render (Free Tier)
-
-1. Fork this repo
-2. Create a new Web Service on Render
-3. Connect your forked repo
-4. Deploy!
-
-Or use `render.yaml` for blueprint deployment.
-
-### Docker
-
-```bash
-docker build -t envburn .
-docker run -p 3000:3000 -v envburn-data:/app/data envburn
-```
-
-## Tech Stack
-
-- **Backend**: Node.js + Hono + SQLite
-- **Encryption**: NaCl (tweetnacl)
-- **Frontend**: Vanilla HTML/JS
-- **Deployment**: Docker + Render
-
-## Pricing (Planned)
-
-- **Free**: 10 secret shares/month
-- **Pro ($9/mo)**: Unlimited shares, custom TTL
-- **Team ($29/mo)**: Audit logs, CLI tool, priority support
+| | Free | Pro ($2/mo) |
+|---|---|---|
+| Secrets | Unlimited | Unlimited |
+| Max TTL | 7 days | 30 days |
+| Max size | 100KB | 1MB |
+| Views per secret | 100 | Unlimited |
+| Password protection | — | ✓ |
 
 ## License
 

@@ -54,6 +54,26 @@ const indexHtml = readFileSync(join(WEB_DIR, 'index.html'), 'utf8');
 const secretHtml = readFileSync(join(WEB_DIR, 'secret.html'), 'utf8');
 const pricingHtml = (() => { try { return readFileSync(join(WEB_DIR, 'pricing.html'), 'utf8'); } catch { return null; } })();
 
+// Serve static public files
+app.get('/icons/*', (c) => {
+  const file = c.req.path;
+  try {
+    const data = readFileSync(join(WEB_DIR, 'public', file.replace('/icons/', 'icons/')));
+    const ext = file.split('.').pop();
+    const types = { png: 'image/png', svg: 'image/svg+xml', json: 'application/json', ico: 'image/x-icon' };
+    return c.body(data, { headers: { 'Content-Type': types[ext] || 'application/octet-stream', 'Cache-Control': 'public, max-age=86400' } });
+  } catch { return c.text('Not found', 404); }
+});
+app.get('/manifest.json', (c) => {
+  try {
+    return c.body(readFileSync(join(WEB_DIR, 'public', 'manifest.json')), { headers: { 'Content-Type': 'application/json' } });
+  } catch { return c.text('Not found', 404); }
+});
+app.get('/robots.txt', (c) => c.text('User-agent: *\nAllow: /\nSitemap: https://envburn.onrender.com/sitemap.xml'));
+app.get('/sitemap.xml', (c) => {
+  return c.body('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><loc>https://envburn.onrender.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n</urlset>', { headers: { 'Content-Type': 'application/xml' } });
+});
+
 app.get('/', (c) => c.html(indexHtml));
 app.get('/s/:id', (c) => c.html(secretHtml));
 if (pricingHtml) app.get('/pricing', (c) => c.html(pricingHtml));
