@@ -7,6 +7,7 @@ import { readFileSync } from 'fs';
 import { nanoid } from 'nanoid';
 import db from './db.js';
 import { generateKey, encrypt, decrypt } from './crypto.js';
+import { createCheckoutSession, handleWebhook, isConfigured } from './stripe.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const WEB_DIR = join(__dirname, '..', '..', 'web');
@@ -126,6 +127,39 @@ app.delete('/api/secrets/:id', (c) => {
   return result.changes > 0
     ? c.json({ burned: true })
     : c.json({ error: 'Secret not found or already burned' }, 404);
+});
+
+// Stripe: checkout
+app.post('/api/checkout', async (c) => {
+  if (!isConfigured()) return c.json({ error: 'Payments not configured' }, 503);
+  const { email } = await c.req.json();
+  if (!email) return c.json({ error: 'Email required' }, 400);
+  const session = await createCheckoutSession(email, process.env.STRIPE_ENVBURN_PRICE_ID);
+  if (session.url) return c.json({ url: session.url });
+  return c.json({ error: 'Checkout failed' }, 500);
+});
+
+// Stripe: webhook
+app.post('/stripe/webhook', async (c) => {
+  const body = await c.req.text();
+  const result = await handleWebhook(body);
+  // Store pro status - for now just log it
+  console.log('Stripe event:', result);
+  return c.json({ received: true });
+});
+
+// Pro success page
+app.get('/pro/success', (c) => {
+  return c.html([
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>EnvBurn Pro</title>',
+    '<style>body{font-family:system-ui;background:#0a0a0a;color:#e4e4e7;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}',
+    '.c{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px;text-align:center;max-width:400px}',
+    '.c h1{color:#f97316;margin-bottom:12px}a{color:#f97316}</style></head><body>',
+    '<div class="c"><h1>&#128293; Pro Activated!</h1>',
+    '<p>30-day expiry, 1MB secrets, unlimited views.</p>',
+    '<p style="margin-top:16px"><a href="/">Create a Secret &rarr;</a></p>',
+    '</div></body></html>',
+  ].join(''));
 });
 
 function getBaseUrl(c) {
