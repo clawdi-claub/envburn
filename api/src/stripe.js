@@ -51,26 +51,27 @@ export async function createCheckoutSession(email, priceId) {
 }
 
 export function parseWebhookEvent(rawBody, signature) {
-  if (STRIPE_WEBHOOK_SECRET) {
-    if (!verifySignature(rawBody, signature, STRIPE_WEBHOOK_SECRET)) {
-      console.error('Stripe webhook signature verification failed');
-      return { action: 'rejected', reason: 'invalid_signature' };
-    }
-  } else {
-    console.warn('STRIPE_WEBHOOK_SECRET not set — skipping signature verification (NOT SAFE FOR PRODUCTION)');
+  if (!STRIPE_WEBHOOK_SECRET) {
+    console.error('STRIPE_WEBHOOK_SECRET not configured — rejecting webhook');
+    return { action: 'rejected', reason: 'webhook_secret_not_configured' };
+  }
+  if (!verifySignature(rawBody, signature, STRIPE_WEBHOOK_SECRET)) {
+    console.error('Stripe webhook signature verification failed');
+    return { action: 'rejected', reason: 'invalid_signature' };
   }
 
   var event = JSON.parse(rawBody);
+  var eventId = event.id || null;
   switch (event.type) {
     case 'checkout.session.completed': {
       var s = event.data.object;
-      return { action: 'activate', email: s.customer_email, customerId: s.customer, subscriptionId: s.subscription };
+      return { action: 'activate', eventId: eventId, email: s.customer_email, customerId: s.customer, subscriptionId: s.subscription };
     }
     case 'customer.subscription.deleted': {
-      return { action: 'deactivate', customerId: event.data.object.customer };
+      return { action: 'deactivate', eventId: eventId, customerId: event.data.object.customer };
     }
     default:
-      return { action: 'none' };
+      return { action: 'none', eventId: eventId };
   }
 }
 

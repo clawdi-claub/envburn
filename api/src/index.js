@@ -5,7 +5,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
 import { nanoid } from 'nanoid';
-import db, { getSubscriber, upsertSubscriber, downgradeByCustomerId, isPro } from './db.js';
+import db, { getSubscriber, upsertSubscriber, downgradeByCustomerId, isPro, isEventProcessed, markEventProcessed } from './db.js';
 import { generateKey, encrypt, decrypt } from './crypto.js';
 import { createCheckoutSession, parseWebhookEvent, isConfigured } from './stripe.js';
 import { rateLimit } from './ratelimit.js';
@@ -27,8 +27,25 @@ app.use('*', async function(c, next) {
   }
 });
 
-// CORS: restrict to same-origin for API
-app.use('/api/*', cors({ origin: function(origin) { return origin || '*'; }, allowMethods: ['GET', 'POST'] }));
+// Body size limit (1MB)
+app.use('*', async function(c, next) {
+  var cl = c.req.header('content-length');
+  if (cl && parseInt(cl) > 1048576) {
+    return c.json({ error: 'Request too large' }, 413);
+  }
+  await next();
+});
+
+// CORS: restrict to same origin in production
+app.use('/api/*', cors({
+  origin: function(origin) {
+    if (!origin) return BASE_URL;
+    if (origin === BASE_URL) return origin;
+    if (process.env.NODE_ENV !== 'production') return origin;
+    return BASE_URL;
+  },
+  allowMethods: ['GET', 'POST', 'DELETE'],
+}));
 
 // Rate limits
 app.use('/api/secrets', rateLimit({ prefix: 'create', window: 3600000, max: 50, message: 'Too many secrets created. Try again later.' }));
@@ -72,13 +89,13 @@ app.get('/s/:id', function(c) { return c.html(secretHtml); });
 if (pricingHtml) app.get('/pricing', function(c) { return c.html(pricingHtml); });
 app.get('/health', function(c) { return c.json({ status: 'ok', service: 'envburn' }); });
 
-// --- Check Pro status ---
-app.get('/api/account/:email', function(c) {
-  var email = decodeURIComponent(c.req.param('email')).toLowerCase();
-  var sub = getSubscriber(email);
+// --- Check Pro status (requires email in query, only returns tier + limits, no PII) ---
+app.post('/api/account/check', async function(c) {
+  var body = await c.req.json();
+  var email = body.email ? body.email.toLowerCase().trim() : null;
+  if (!email) return c.json({ error: 'Email required' }, 400);
   return c.json({
-    email: email,
-    tier: sub ? sub.tier : 'free',
+    tier: isPro(email) ? 'pro' : 'free',
     limits: getLimits(email),
   });
 });
@@ -167,13 +184,22 @@ app.get('/api/secrets/:id/exists', function(c) {
   return c.json({ exists: !!row }, row ? 200 : 404);
 });
 
-// --- Delete ---
+// --- Delete (requires valid decryption key as proof of ownership) ---
 app.delete('/api/secrets/:id', function(c) {
   var id = c.req.param('id');
-  var result = db.prepare('UPDATE secrets SET burned_at = unixepoch(), views_remaining = 0 WHERE id = ? AND burned_at IS NULL').run(id);
-  return result.changes > 0
-    ? c.json({ burned: true })
-    : c.json({ error: 'Secret not found or already burned' }, 404);
+  var key = c.req.query('key');
+  if (!key) return c.json({ error: 'key is required for deletion' }, 400);
+
+  var row = db.prepare(
+    'SELECT encrypted_data, nonce FROM secrets WHERE id = ? AND burned_at IS NULL'
+  ).get(id);
+  if (!row) return c.json({ error: 'Secret not found or already burned' }, 404);
+
+  try { decrypt(row.encrypted_data, row.nonce, key); }
+  catch (e) { return c.json({ error: 'Invalid key — unauthorized' }, 403); }
+
+  db.prepare('UPDATE secrets SET burned_at = unixepoch(), views_remaining = 0 WHERE id = ?').run(id);
+  return c.json({ burned: true });
 });
 
 // --- Stripe: upgrade ---
@@ -193,6 +219,15 @@ app.post('/stripe/webhook', async function(c) {
   var sig = c.req.header('stripe-signature');
   var ev = parseWebhookEvent(body, sig);
 
+  if (ev.action === 'rejected') {
+    return c.json({ error: ev.reason }, 400);
+  }
+
+  // Idempotency: skip already-processed events
+  if (ev.eventId && isEventProcessed(ev.eventId)) {
+    return c.json({ received: true, duplicate: true });
+  }
+
   if (ev.action === 'activate') {
     upsertSubscriber(ev.email, ev.customerId, ev.subscriptionId, 'pro');
     console.log('Pro activated:', ev.email);
@@ -201,6 +236,7 @@ app.post('/stripe/webhook', async function(c) {
     console.log('Pro deactivated:', ev.customerId);
   }
 
+  if (ev.eventId) markEventProcessed(ev.eventId);
   return c.json({ received: true });
 });
 

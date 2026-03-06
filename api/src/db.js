@@ -42,6 +42,19 @@ db.exec([
 // Add owner_email column if missing (migration)
 try { db.exec('ALTER TABLE secrets ADD COLUMN owner_email TEXT'); } catch (e) { /* already exists */ }
 
+// Idempotency table for Stripe events
+db.exec([
+  'CREATE TABLE IF NOT EXISTS processed_events (',
+  '  event_id TEXT PRIMARY KEY,',
+  '  processed_at INTEGER NOT NULL DEFAULT (unixepoch())',
+  ');',
+].join('\n'));
+
+// Cleanup old processed events every 60s (keep 24h)
+setInterval(function() {
+  db.prepare('DELETE FROM processed_events WHERE processed_at < unixepoch() - 86400').run();
+}, 60000);
+
 // Cleanup expired/burned secrets every 60s
 setInterval(function() {
   db.prepare('DELETE FROM secrets WHERE expires_at < unixepoch() OR burned_at IS NOT NULL').run();
@@ -72,6 +85,14 @@ export function isPro(email) {
   if (!email) return false;
   var row = db.prepare("SELECT tier FROM subscribers WHERE email = ?").get(email);
   return row && row.tier === 'pro';
+}
+
+export function isEventProcessed(eventId) {
+  return !!db.prepare('SELECT 1 FROM processed_events WHERE event_id = ?').get(eventId);
+}
+
+export function markEventProcessed(eventId) {
+  db.prepare('INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)').run(eventId);
 }
 
 export default db;

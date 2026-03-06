@@ -15,8 +15,11 @@ export function rateLimit(opts) {
   var message = opts.message || 'Too many requests';
 
   return async function(c, next) {
-    var ip = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown';
-    ip = ip.split(',')[0].trim();
+    // Use x-forwarded-for only behind trusted proxy (Render sets this); take first IP
+    var xff = c.req.header('x-forwarded-for');
+    var ip = xff ? xff.split(',')[0].trim() : (c.req.header('x-real-ip') || 'unknown');
+    // Normalize IPv6-mapped IPv4
+    if (ip.startsWith('::ffff:')) ip = ip.slice(7);
     var key = opts.prefix + ':' + ip;
     var now = Date.now();
 
