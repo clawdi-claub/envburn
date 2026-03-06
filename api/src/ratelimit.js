@@ -1,13 +1,24 @@
 // Simple in-memory rate limiter
 // window: time window in ms, max: max requests per window
 var store = new Map();
+var MAX_ENTRIES = parseInt(process.env.RATE_LIMIT_MAX_ENTRIES || '10000', 10);
+
+// Cleanup interval: 60s, configurable via env
+var CLEANUP_INTERVAL_MS = parseInt(process.env.RATE_LIMIT_CLEANUP_INTERVAL_MS || '60000', 10);
 
 setInterval(function() {
   var now = Date.now();
   store.forEach(function(v, k) {
     if (now - v.start > v.window) store.delete(k);
   });
-}, 60000);
+  // Prevent memory leak: evict oldest entries if over cap
+  if (store.size > MAX_ENTRIES) {
+    var entries = Array.from(store.entries());
+    entries.sort(function(a, b) { return a[1].start - b[1].start; });
+    var toDelete = entries.slice(0, entries.length - MAX_ENTRIES);
+    toDelete.forEach(function(e) { store.delete(e[0]); });
+  }
+}, CLEANUP_INTERVAL_MS);
 
 export function rateLimit(opts) {
   var windowMs = opts.window || 60000;

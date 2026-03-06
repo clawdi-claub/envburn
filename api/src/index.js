@@ -15,6 +15,22 @@ var WEB_DIR = join(__dirname, '..', '..', 'web');
 var BASE_URL = process.env.BASE_URL || 'https://envburn.onrender.com';
 
 var app = new Hono();
+
+// Request logging middleware
+app.use('*', async function(c, next) {
+  var start = Date.now();
+  await next();
+  if (process.env.NODE_ENV !== 'test') {
+    console.log('[%s] %s %s %sms %s',
+      new Date().toISOString(),
+      c.req.method,
+      c.req.path,
+      Date.now() - start,
+      c.res.status
+    );
+  }
+});
+
 // Security headers
 app.use('*', async function(c, next) {
   await next();
@@ -39,10 +55,10 @@ app.use('*', async function(c, next) {
 // CORS: restrict to same origin in production
 app.use('/api/*', cors({
   origin: function(origin) {
-    if (!origin) return BASE_URL;
-    if (origin === BASE_URL) return origin;
-    if (process.env.NODE_ENV !== 'production') return origin;
-    return BASE_URL;
+    if (!origin) return true; // Allow non-browser requests (curl, server-to-server)
+    if (origin === BASE_URL) return true;
+    if (process.env.NODE_ENV !== 'production') return true;
+    return false; // Explicitly deny other origins in production
   },
   allowMethods: ['GET', 'POST', 'DELETE'],
 }));
@@ -87,7 +103,18 @@ var pricingHtml = (function() { try { return readFileSync(join(WEB_DIR, 'pricing
 app.get('/', function(c) { return c.html(indexHtml); });
 app.get('/s/:id', function(c) { return c.html(secretHtml); });
 if (pricingHtml) app.get('/pricing', function(c) { return c.html(pricingHtml); });
-app.get('/health', function(c) { return c.json({ status: 'ok', service: 'envburn' }); });
+app.get('/health', function(c) {
+  var dbOk = true;
+  try { db.prepare('SELECT 1').get(); } catch (e) { dbOk = false; }
+  var stripeOk = !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID && process.env.STRIPE_WEBHOOK_SECRET);
+  var status = dbOk && stripeOk ? 'ok' : 'degraded';
+  return c.json({
+    status: status,
+    service: 'envburn',
+    db: dbOk ? 'ok' : 'error',
+    stripe: stripeOk ? 'configured' : 'unconfigured',
+  }, dbOk && stripeOk ? 200 : 503);
+});
 
 // --- Check Pro status (requires email in query, only returns tier + limits, no PII) ---
 app.post('/api/account/check', async function(c) {
@@ -262,6 +289,12 @@ app.get('/pro/success', function(c) {
 
 function getBaseUrl(c) {
   return process.env.BASE_URL || c.req.url.split('/api')[0];
+}
+
+// CRITICAL: Fail fast in production if Stripe webhook secret is missing
+if (process.env.NODE_ENV === 'production' && !process.env.STRIPE_WEBHOOK_SECRET) {
+  console.error('FATAL: STRIPE_WEBHOOK_SECRET not configured in production. Refusing to start.');
+  process.exit(1);
 }
 
 var port = parseInt(process.env.PORT || '3000', 10);

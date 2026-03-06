@@ -15,6 +15,58 @@ describe('API integration', () => {
     var { status, body } = await json('/health');
     expect(status).toBe(200);
     expect(body.status).toBe('ok');
+    expect(body.service).toBe('envburn');
+  });
+
+  it('full secret lifecycle: create → retrieve → burn', async () => {
+    // Create with burnAfterRead=true
+    var create = await json('/api/secrets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: 'LIFECYCLE_TEST=secret123', burnAfterRead: true }),
+    });
+    expect(create.status).toBe(201);
+    expect(create.body.id).toBeDefined();
+    expect(create.body.key).toBeDefined();
+
+    // First retrieve succeeds and burns
+    var r1 = await json('/api/secrets/' + create.body.id + '?key=' + encodeURIComponent(create.body.key));
+    expect(r1.status).toBe(200);
+    expect(r1.body.content).toBe('LIFECYCLE_TEST=secret123');
+    expect(r1.body.burned).toBe(true);
+
+    // Second retrieve fails (404)
+    var r2 = await json('/api/secrets/' + create.body.id + '?key=' + encodeURIComponent(create.body.key));
+    expect(r2.status).toBe(404);
+  });
+
+  it('multi-view lifecycle: create → retrieve x3 → exhausted', async () => {
+    var create = await json('/api/secrets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: 'MULTI_VIEW', burnAfterRead: false, views: 3 }),
+    });
+    expect(create.body.viewsRemaining).toBe(3);
+
+    // First view
+    var r1 = await json('/api/secrets/' + create.body.id + '?key=' + encodeURIComponent(create.body.key));
+    expect(r1.status).toBe(200);
+    expect(r1.body.viewsRemaining).toBe(2);
+
+    // Second view
+    var r2 = await json('/api/secrets/' + create.body.id + '?key=' + encodeURIComponent(create.body.key));
+    expect(r2.status).toBe(200);
+    expect(r2.body.viewsRemaining).toBe(1);
+
+    // Third view (last one, burns after)
+    var r3 = await json('/api/secrets/' + create.body.id + '?key=' + encodeURIComponent(create.body.key));
+    expect(r3.status).toBe(200);
+    expect(r3.body.burned).toBe(true);
+    expect(r3.body.viewsRemaining).toBe(0);
+
+    // Fourth view fails
+    var r4 = await json('/api/secrets/' + create.body.id + '?key=' + encodeURIComponent(create.body.key));
+    expect(r4.status).toBe(404);
   });
 
   it('POST /api/secrets creates a secret', async () => {
