@@ -15,160 +15,323 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
   <link rel="manifest" href="/manifest.json">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #fff; min-height: 100vh; display: flex; flex-direction: column; }
-    .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
-    header { text-align: center; margin-bottom: 3rem; }
-    h1 { font-size: 3rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #ff6b6b, #feca57); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .logo { width: 64px; height: 64px; margin-bottom: 12px; }
-    .tagline { color: #888; font-size: 1.2rem; }
-    .card { background: #1a1a1a; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; border: 1px solid #333; }
-    textarea { width: 100%; min-height: 200px; background: #0f0f0f; border: 1px solid #333; border-radius: 8px; padding: 1rem; color: #fff; font-family: 'SF Mono', monospace; font-size: 14px; resize: vertical; }
-    textarea:focus { outline: none; border-color: #ff6b6b; }
-    .controls { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; align-items: center; }
-    select, input[type="number"] { background: #0f0f0f; border: 1px solid #333; color: #fff; padding: 0.5rem 1rem; border-radius: 8px; }
-    button { background: linear-gradient(135deg, #ff6b6b, #feca57); border: none; padding: 0.75rem 2rem; border-radius: 8px; color: #0f0f0f; font-weight: 600; cursor: pointer; font-size: 1rem; }
-    button:hover { opacity: 0.9; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .result { margin-top: 1.5rem; padding: 1.5rem; background: #0d2818; border: 1px solid #1d5c35; border-radius: 8px; word-break: break-all; }
-    .result.error { background: #2a0a0a; border-color: #5c1d1d; }
-    .url-box { background: #0f0f0f; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: monospace; font-size: 14px; color: #4ade80; }
-    .url-box code { color: #feca57; }
-    .copy-btn { background: #333; color: #fff; padding: 0.5rem 1rem; font-size: 0.9rem; }
-    footer { text-align: center; color: #666; padding: 2rem; margin-top: auto; }
-    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
-    .feature { text-align: center; padding: 1.5rem; }
-    .feature-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-    .loading { display: none; }
-    .loading.active { display: inline; }
+    :root{--bg:#09090b;--surface:#141416;--surface2:#1a1a1e;--border:#27272a;--border-h:#3f3f46;--text:#e4e4e7;--muted:#a1a1aa;--dim:#71717a;--fire:#f97316;--fire-h:#ea580c;--fire-deep:#c2410c;--gold:#fbbf24;--green:#22c55e;--red:#ef4444}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+
+    /* Hero */
+    .hero{text-align:center;padding:80px 20px 32px;position:relative}
+    .hero::before{content:"";position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:700px;height:700px;background:radial-gradient(circle,rgba(249,115,22,0.06) 0%,transparent 70%);pointer-events:none}
+    .badge{display:inline-block;padding:6px 14px;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);border-radius:20px;font-size:13px;color:var(--fire);margin-bottom:20px}
+    h1{font-size:clamp(2.4rem,5vw,3.2rem);font-weight:800;margin-bottom:12px;letter-spacing:-0.02em}
+    h1 span{background:linear-gradient(135deg,#ff6b6b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .tagline{color:var(--muted);font-size:1.1rem;max-width:440px;margin:0 auto;line-height:1.6}
+
+    /* Features row */
+    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;max-width:740px;margin:40px auto 48px;padding:0 20px}
+    .feat{text-align:center;padding:20px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+    .feat-icon{font-size:24px;margin-bottom:8px}
+    .feat h3{font-size:14px;font-weight:700;margin-bottom:4px}
+    .feat p{color:var(--dim);font-size:13px;line-height:1.4}
+
+    /* Main card */
+    .card{max-width:640px;margin:0 auto 40px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+    .card h2{font-size:1.3rem;font-weight:700;margin-bottom:16px}
+    textarea{width:100%;min-height:180px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;color:var(--text);font-family:"SF Mono",SFMono-Regular,Consolas,monospace;font-size:13px;resize:vertical;transition:border 0.15s}
+    textarea:focus{outline:none;border-color:var(--fire);box-shadow:0 0 0 3px rgba(249,115,22,0.1)}
+    textarea::placeholder{color:var(--dim)}
+
+    /* Controls */
+    .controls{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;align-items:center}
+    .ctrl-group{display:flex;align-items:center;gap:6px}
+    .ctrl-group label{font-size:13px;color:var(--muted)}
+    select,input[type="number"]{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px}
+    select:focus,input[type="number"]:focus{outline:none;border-color:var(--fire)}
+
+    /* Email row */
+    .email-row{margin-top:14px;display:flex;gap:10px;align-items:center}
+    .email-row input{flex:1;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px}
+    .email-row input:focus{outline:none;border-color:var(--fire);box-shadow:0 0 0 3px rgba(249,115,22,0.1)}
+    .email-row input::placeholder{color:var(--dim)}
+    .email-note{font-size:12px;color:var(--dim);margin-top:6px}
+    .email-note a{color:var(--fire);text-decoration:none}
+
+    /* Tier indicator */
+    .tier-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.5px}
+    .tier-badge.free{background:var(--border);color:var(--muted)}
+    .tier-badge.pro{background:var(--fire);color:white}
+    .tier-info{margin-top:8px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);display:none}
+
+    /* CTA */
+    .cta{width:100%;margin-top:16px;padding:14px;background:linear-gradient(135deg,var(--fire),var(--fire-deep));color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.1s,box-shadow 0.15s}
+    .cta:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(249,115,22,0.3)}
+    .cta:active{transform:translateY(0)}
+    .cta:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+
+    /* Result */
+    .result{display:none;max-width:640px;margin:0 auto 40px;padding:24px;background:#0d2818;border:1px solid #1d5c35;border-radius:12px;word-break:break-all;animation:fadeIn 0.3s ease}
+    .result.error{background:#2a0a0a;border-color:#5c1d1d}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .result h3{margin-bottom:8px}
+    .url-box{background:var(--bg);padding:14px;border-radius:8px;margin:12px 0;font-family:monospace;font-size:13px;color:#4ade80;display:flex;align-items:center;gap:10px}
+    .url-box code{flex:1;word-break:break-all}
+    .copy-btn{background:var(--border);color:var(--text);padding:8px 16px;font-size:13px;font-weight:600;border:1px solid var(--border-h);border-radius:6px;cursor:pointer;white-space:nowrap}
+    .copy-btn:hover{background:var(--border-h)}
+    .copy-btn.copied{background:var(--green);border-color:var(--green);color:var(--bg)}
+
+    /* Pricing */
+    .pricing{text-align:center;padding:64px 20px}
+    .pricing h2{font-size:2rem;font-weight:800;margin-bottom:8px;letter-spacing:-0.02em}
+    .pricing .sub{color:var(--muted);margin-bottom:36px;font-size:15px}
+    .plans{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+    .plan{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:280px;text-align:left}
+    .plan.pro{border-color:var(--fire);position:relative}
+    .plan.pro::after{content:"POPULAR";position:absolute;top:-10px;right:20px;background:var(--fire);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px}
+    .plan h3{font-size:1.2rem;margin-bottom:4px;font-weight:700}
+    .plan .price{font-size:2.5rem;font-weight:800;margin-bottom:4px}
+    .plan.free .price{color:var(--text)}
+    .plan.pro .price{background:linear-gradient(135deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .plan .period{color:var(--dim);font-size:13px;margin-bottom:20px}
+    .plan ul{list-style:none;margin-bottom:24px}
+    .plan li{padding:5px 0;color:var(--muted);font-size:14px}
+    .plan li::before{content:"\2713\00a0 ";color:var(--green);font-weight:700}
+    .plan-btn{display:block;width:100%;padding:12px;border-radius:10px;text-align:center;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;border:none;transition:all 0.15s}
+    .plan-btn.free-btn{background:var(--bg);border:1px solid var(--border);color:var(--text)}
+    .plan-btn.pro-btn{background:linear-gradient(135deg,var(--fire),var(--fire-deep));color:white}
+    .plan-btn.pro-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(249,115,22,0.3)}
+
+    /* Footer */
+    footer{text-align:center;padding:40px 20px;border-top:1px solid var(--border);color:var(--dim);font-size:13px;margin-top:auto}
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      
-      <h1>🔥 EnvBurn</h1>
-      <p class="tagline">Self-destructing secret sharing for developers</p>
-    </header>
 
-    <div class="features">
-      <div class="feature">
-        <div class="feature-icon">🔐</div>
-        <h3>Client-Side Encryption</h3>
-        <p>Your secrets are encrypted before leaving your browser</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">⏳</div>
-        <h3>Auto-Destruct</h3>
-        <p>Links expire after viewing or when the timer runs out</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">🚫</div>
-        <h3>Zero Signup</h3>
-        <p>No accounts, no tracking, no hassle</p>
-      </div>
-    </div>
+<div class="hero">
+  <div class="badge">&#128274; Zero-knowledge encryption</div>
+  <h1>&#128293; <span>EnvBurn</span></h1>
+  <p class="tagline">Share secrets through encrypted, self-destructing links. Your data never touches our server in plaintext.</p>
+</div>
 
-    <div class="card" id="createForm">
-      <h2>Share a Secret</h2>
-      <textarea id="secretContent" placeholder="Paste your .env, API keys, or secrets here...
+<div class="features">
+  <div class="feat"><div class="feat-icon">&#128274;</div><h3>Client-Side Encryption</h3><p>NaCl encryption in your browser</p></div>
+  <div class="feat"><div class="feat-icon">&#9203;</div><h3>Auto-Destruct</h3><p>Burns after reading or on timer</p></div>
+  <div class="feat"><div class="feat-icon">&#128683;</div><h3>Zero Signup</h3><p>No accounts required for free tier</p></div>
+</div>
 
-Example:
+<div class="card" id="createForm">
+  <h2>Share a Secret</h2>
+  <textarea id="secretContent" placeholder="Paste your .env, API keys, or secrets here...
+
 DATABASE_URL=postgres://user:pass@localhost/db
 AWS_ACCESS_KEY_ID=AKIA...
 JWT_SECRET=your-jwt-secret"></textarea>
-      
-      <div class="controls">
-        <label>Expires in:</label>
-        <select id="ttl">
-          <option value="300">5 minutes</option>
-          <option value="900">15 minutes</option>
-          <option value="3600" selected>1 hour</option>
-          <option value="86400">24 hours</option>
-          <option value="604800">7 days</option>
-        </select>
-        
-        <label>Views:</label>
-        <input type="number" id="views" value="1" min="1" max="100" style="width: 80px;">
-        
-        <button onclick="createSecret()" id="createBtn">
-          <span class="loading" id="loading">Creating...</span>
-          <span id="btnText">Create Secret Link</span>
-        </button>
-      </div>
-    </div>
 
-    <div id="result" class="result" style="display: none;"></div>
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Expires:</label>
+      <select id="ttl">
+        <option value="300">5 min</option>
+        <option value="900">15 min</option>
+        <option value="3600" selected>1 hour</option>
+        <option value="86400">24 hours</option>
+        <option value="604800">7 days</option>
+        <option value="2592000" disabled id="ttl-30d">30 days (Pro)</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Views:</label>
+      <input type="number" id="views" value="1" min="1" max="100">
+    </div>
   </div>
 
-  <footer>
-    <p>🔥 EnvBurn — The secret you share disappears forever after it's read</p>
-    <p style="margin-top: 0.5rem; color: #444;">Open source • Zero knowledge • Built for developers</p>
-  </footer>
+  <div class="email-row">
+    <input type="email" id="userEmail" placeholder="your@email.com (optional — unlocks Pro limits)">
+  </div>
+  <div class="email-note">Enter your email to check Pro status or <a href="#pricing">upgrade for $2/mo</a></div>
+  <div class="tier-info" id="tierInfo"></div>
 
-  <script>
-    const API_URL = window.location.origin;
+  <button class="cta" onclick="createSecret()" id="createBtn">Create Secret Link &rarr;</button>
+</div>
 
-    async function createSecret() {
-      const content = document.getElementById('secretContent').value.trim();
-      const ttl = parseInt(document.getElementById('ttl').value);
-      const views = parseInt(document.getElementById('views').value);
-      const btn = document.getElementById('createBtn');
-      const loading = document.getElementById('loading');
-      const btnText = document.getElementById('btnText');
-      const resultDiv = document.getElementById('result');
+<div id="result" class="result"></div>
 
-      if (!content) {
-        alert('Please enter a secret to share');
-        return;
+<div class="pricing" id="pricing">
+  <h2>Simple Pricing</h2>
+  <p class="sub">Free for basic use. Pro for power users and teams.</p>
+  <div class="plans">
+    <div class="plan free">
+      <h3>Free</h3>
+      <div class="price">$0</div>
+      <div class="period">forever</div>
+      <ul>
+        <li>Unlimited secrets</li>
+        <li>7-day max expiry</li>
+        <li>100KB max size</li>
+        <li>Up to 100 views</li>
+        <li>Client-side encryption</li>
+      </ul>
+      <a href="#createForm" class="plan-btn free-btn">Start Free</a>
+    </div>
+    <div class="plan pro">
+      <h3>Pro</h3>
+      <div class="price">$2</div>
+      <div class="period">per month</div>
+      <ul>
+        <li>Unlimited secrets</li>
+        <li>30-day max expiry</li>
+        <li>1MB max size</li>
+        <li>Up to 10,000 views</li>
+        <li>Client-side encryption</li>
+        <li>Password protection</li>
+      </ul>
+      <button class="plan-btn pro-btn" onclick="upgrade()">Upgrade to Pro &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&#128293; EnvBurn &mdash; The secret you share disappears forever after it's read</p>
+  <p style="margin-top:6px">Zero knowledge &bull; Open source &bull; Built for developers</p>
+</footer>
+
+<script>
+var API_URL = window.location.origin;
+var currentTier = 'free';
+
+// Check tier when email changes
+var emailEl = document.getElementById('userEmail');
+var debounceTimer;
+emailEl.addEventListener('input', function() {
+  clearTimeout(debounceTimer);
+  var email = emailEl.value.trim();
+  if (!email || email.indexOf('@') === -1) {
+    document.getElementById('tierInfo').style.display = 'none';
+    setTier('free');
+    return;
+  }
+  debounceTimer = setTimeout(function() { checkTier(email); }, 600);
+});
+
+function checkTier(email) {
+  fetch(API_URL + '/api/account/' + encodeURIComponent(email))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var info = document.getElementById('tierInfo');
+      if (d.tier === 'pro') {
+        setTier('pro');
+        info.innerHTML = '<span class="tier-badge pro">PRO</span> Max size: 1MB &bull; Max TTL: 30 days &bull; Views: 10,000';
+      } else {
+        setTier('free');
+        info.innerHTML = '<span class="tier-badge free">FREE</span> Max size: 100KB &bull; Max TTL: 7 days &bull; <a href="#pricing" style="color:var(--fire)">Upgrade to Pro</a>';
       }
+      info.style.display = 'block';
+    })
+    .catch(function() {});
+}
 
-      // Show loading
-      btn.disabled = true;
-      loading.classList.add('active');
-      btnText.style.display = 'none';
-
-      try {
-        const response = await fetch(`${API_URL}/api/secrets`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content, ttl, views, burnAfterRead: views === 1 })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          resultDiv.className = 'result';
-          resultDiv.innerHTML = `
-            <h3>✅ Secret Created!</h3>
-            <p>Share this link with your recipient. It ${views === 1 ? 'will self-destruct after first view' : `allows ${views} views`}.</p>
-            <div class="url-box">
-              <code>${data.url}</code>
-            </div>
-            <button class="copy-btn" onclick="copyToClipboard('${data.url.replace(/'/g, "\\'")}')">Copy Link</button>
-            <p style="margin-top: 1rem; color: #888; font-size: 0.9rem;">
-              ⏰ Expires: ${new Date(data.expiresAt).toLocaleString()}
-            </p>
-          `;
-        } else {
-          throw new Error(data.error || 'Failed to create secret');
-        }
-      } catch (err) {
-        resultDiv.className = 'result error';
-        resultDiv.innerHTML = `<strong>Error:</strong> ${err.message}`;
-      } finally {
-        resultDiv.style.display = 'block';
-        btn.disabled = false;
-        loading.classList.remove('active');
-        btnText.style.display = 'inline';
-      }
+function setTier(tier) {
+  currentTier = tier;
+  var opt30d = document.getElementById('ttl-30d');
+  if (tier === 'pro') {
+    opt30d.disabled = false;
+    opt30d.textContent = '30 days';
+    document.getElementById('views').max = 10000;
+  } else {
+    opt30d.disabled = true;
+    opt30d.textContent = '30 days (Pro)';
+    document.getElementById('views').max = 100;
+    if (parseInt(document.getElementById('views').value) > 100) {
+      document.getElementById('views').value = 100;
     }
+  }
+}
 
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Link copied to clipboard!');
-      });
+async function createSecret() {
+  var content = document.getElementById('secretContent').value.trim();
+  var ttl = parseInt(document.getElementById('ttl').value);
+  var views = parseInt(document.getElementById('views').value);
+  var email = document.getElementById('userEmail').value.trim();
+  var btn = document.getElementById('createBtn');
+  var resultDiv = document.getElementById('result');
+
+  if (!content) {
+    document.getElementById('secretContent').focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+
+  try {
+    var body = { content: content, ttl: ttl, views: views, burnAfterRead: views === 1 };
+    if (email) body.email = email;
+
+    var response = await fetch(API_URL + '/api/secrets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    var data = await response.json();
+
+    if (response.ok) {
+      resultDiv.className = 'result';
+      var tierLabel = data.tier === 'pro' ? ' <span class="tier-badge pro">PRO</span>' : '';
+      resultDiv.innerHTML = '<h3>&#9989; Secret Created!' + tierLabel + '</h3>'
+        + '<p style="color:var(--muted);margin-bottom:8px">Share this link. It '
+        + (views === 1 ? 'will self-destruct after first view.' : 'allows ' + views + ' views.')
+        + '</p>'
+        + '<div class="url-box"><code id="secretUrl">' + data.url + '</code>'
+        + '<button class="copy-btn" id="copyBtn" onclick="copyUrl()">Copy</button></div>'
+        + '<p style="color:var(--dim);font-size:13px">&#9203; Expires: ' + new Date(data.expiresAt).toLocaleString() + '</p>';
+      resultDiv.style.display = 'block';
+      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      btn.textContent = '\u2713 Created!';
+      btn.style.background = 'var(--green)';
+    } else {
+      throw new Error(data.error || 'Failed to create secret');
     }
-  </script>
+  } catch (err) {
+    resultDiv.className = 'result error';
+    resultDiv.innerHTML = '<strong>Error:</strong> ' + err.message;
+    resultDiv.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Create Secret Link \u2192';
+  }
+}
+
+function copyUrl() {
+  var url = document.getElementById('secretUrl').textContent;
+  var btn = document.getElementById('copyBtn');
+  navigator.clipboard.writeText(url);
+  btn.textContent = 'Copied!';
+  btn.classList.add('copied');
+  setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+}
+
+function upgrade() {
+  var email = document.getElementById('userEmail').value.trim();
+  if (!email || email.indexOf('@') === -1) {
+    document.getElementById('userEmail').focus();
+    document.getElementById('userEmail').style.borderColor = 'var(--fire)';
+    alert('Enter your email first, then click Upgrade.');
+    return;
+  }
+  fetch(API_URL + '/api/upgrade', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.url) {
+      window.location.href = d.url;
+    } else {
+      alert(d.error || 'Upgrade not available yet');
+    }
+  })
+  .catch(function(e) { alert('Error: ' + e.message); });
+}
+</script>
 </body>
 </html>
