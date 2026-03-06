@@ -84,7 +84,7 @@ export function downgradeByCustomerId(customerId) {
 export function isPro(email) {
   if (!email) return false;
   var row = db.prepare("SELECT tier FROM subscribers WHERE email = ?").get(email);
-  return row && row.tier === 'pro';
+  return !!(row && row.tier === 'pro');
 }
 
 export function isEventProcessed(eventId) {

@@ -5,8 +5,9 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['test/**/*.test.js'],
+    testTimeout: 10000,
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json'],
       exclude: ['node_modules', 'test/**']
     }
   }

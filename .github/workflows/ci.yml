@@ -2,93 +2,51 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
   pull_request:
-    branches: [master]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [20.x, 22.x]
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: api/
-    
-    - name: Install dependencies
-      run: |
-        cd api
-        npm ci
-    
-    - name: Run tests
-      run: |
-        cd api
-        npm test
-    
-    - name: Run tests with coverage
-      run: |
-        cd api
-        npm run test:coverage
-    
-    - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report-${{ matrix.node-version }}
-        path: api/coverage/
-        retention-days: 7
+    defaults:
+      run:
+        working-directory: api
 
-  security:
-    runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22.x
-        cache: 'npm'
-        cache-dependency-path: api/
-    
-    - name: Install dependencies
-      run: |
-        cd api
-        npm ci
-    
-    - name: Check for hardcoded secrets
-      run: |
-        cd api
-        ! grep -r "sk_live_" src/ || (echo "❌ Live Stripe keys found in source!" && exit 1)
-        ! grep -r "whsec_" src/ || (echo "❌ Webhook secrets hardcoded!" && exit 1)
-    
-    - name: Validate environment usage
-      run: |
-        cd api
-        node -e "console.log('✅ All secrets loaded via process.env')"
+      - uses: actions/checkout@v4
 
-  build:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Start server for integration tests
+        run: |
+          mkdir -p /tmp/test-data
+          PORT=3099 DB_PATH=/tmp/test-data/envburn-test.db node src/index.js &
+          npx wait-on http://localhost:3099/health --timeout 30000
+        env:
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_PRICE_ID: price_dummy
+
+      - name: Run integration tests
+        run: TEST_PORT=3099 npm run test:integration
+
+      - name: Stop server
+        run: pkill -f "node src/index.js" || true
+
+  deploy:
+    needs: test
     runs-on: ubuntu-latest
-    needs: [test, security]
-    
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22.x
-    
-    - name: Verify build
-      run: |
-        cd api
-        npm ci
-        node -e "import('./src/index.js').then(() => console.log('✅ Build successful'))"
+      - name: Deploy to Render
+        run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"

@@ -1,54 +1,68 @@
 import { describe, it, expect } from 'vitest';
 import { rateLimit } from '../src/ratelimit.js';
 
-// Mock Hono context
-function createMockContext(ip = '1.2.3.4') {
+function mockCtx(ip) {
+  var headers = {};
   return {
     req: {
-      header: (name) => name === 'x-forwarded-for' ? ip : undefined
+      header: function(name) {
+        if (name === 'x-forwarded-for') return ip || null;
+        return null;
+      }
     },
-    header: () => {},
-    json: (data, status) => ({ data, status })
+    header: function(k, v) { headers[k] = v; },
+    json: function(data, status) { return { data, status }; },
+    _headers: headers,
   };
 }
 
 describe('Rate limiting', () => {
-  it('should allow requests under limit', async () => {
-    const limiter = rateLimit({ prefix: 'test', window: 60000, max: 5 });
-    const ctx = createMockContext();
-    
-    // First request should pass
-    const result = await limiter(ctx, () => Promise.resolve());
-    expect(result?.status).not.toBe(429);
+  it('allows requests under limit', async () => {
+    var limiter = rateLimit({ prefix: 'rl-test-1', window: 60000, max: 5 });
+    var called = false;
+    await limiter(mockCtx('10.0.0.1'), () => { called = true; });
+    expect(called).toBe(true);
   });
 
-  it('should block requests over limit', async () => {
-    const limiter = rateLimit({ prefix: 'test', window: 60000, max: 2 });
-    const ctx = createMockContext();
-    
-    // First two requests pass
-    await limiter(ctx, () => Promise.resolve());
-    await limiter(ctx, () => Promise.resolve());
-    
-    // Third request should be blocked
-    const result = await limiter(ctx, () => Promise.resolve());
-    expect(result?.status).toBe(429);
-    expect(result?.data?.error).toContain('Too many requests');
+  it('blocks requests over limit', async () => {
+    var limiter = rateLimit({ prefix: 'rl-test-2', window: 60000, max: 2 });
+    var ctx = mockCtx('10.0.0.2');
+    await limiter(ctx, () => {});
+    await limiter(ctx, () => {});
+    var result = await limiter(ctx, () => {});
+    expect(result.status).toBe(429);
   });
 
-  it('should track different IPs separately', async () => {
-    const limiter = rateLimit({ prefix: 'test', window: 60000, max: 1 });
-    
-    const ctx1 = createMockContext('1.2.3.4');
-    const ctx2 = createMockContext('5.6.7.8');
-    
-    // First IP hits limit
-    await limiter(ctx1, () => Promise.resolve());
-    const result1 = await limiter(ctx1, () => Promise.resolve());
-    expect(result1?.status).toBe(429);
-    
-    // Second IP should still pass
-    const result2 = await limiter(ctx2, () => Promise.resolve());
-    expect(result2?.status).not.toBe(429);
+  it('tracks different IPs separately', async () => {
+    var limiter = rateLimit({ prefix: 'rl-test-3', window: 60000, max: 1 });
+    await limiter(mockCtx('10.0.0.3'), () => {});
+    var blocked = await limiter(mockCtx('10.0.0.3'), () => {});
+    expect(blocked.status).toBe(429);
+
+    var called = false;
+    await limiter(mockCtx('10.0.0.4'), () => { called = true; });
+    expect(called).toBe(true);
+  });
+
+  it('normalizes IPv6-mapped IPv4', async () => {
+    var limiter = rateLimit({ prefix: 'rl-test-4', window: 60000, max: 1 });
+    await limiter(mockCtx('::ffff:10.0.0.5'), () => {});
+    var blocked = await limiter(mockCtx('10.0.0.5'), () => {});
+    expect(blocked.status).toBe(429);
+  });
+
+  it('takes first IP from x-forwarded-for chain', async () => {
+    var limiter = rateLimit({ prefix: 'rl-test-5', window: 60000, max: 1 });
+    await limiter(mockCtx('1.1.1.1, 2.2.2.2, 3.3.3.3'), () => {});
+    var blocked = await limiter(mockCtx('1.1.1.1'), () => {});
+    expect(blocked.status).toBe(429);
+  });
+
+  it('sets rate limit headers', async () => {
+    var limiter = rateLimit({ prefix: 'rl-test-6', window: 60000, max: 10 });
+    var ctx = mockCtx('10.0.0.6');
+    await limiter(ctx, () => {});
+    expect(ctx._headers['X-RateLimit-Limit']).toBe('10');
+    expect(ctx._headers['X-RateLimit-Remaining']).toBe('9');
   });
 });

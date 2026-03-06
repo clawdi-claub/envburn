@@ -215,29 +215,34 @@ app.post('/api/upgrade', async function(c) {
 
 // --- Stripe: webhook ---
 app.post('/stripe/webhook', async function(c) {
-  var body = await c.req.text();
-  var sig = c.req.header('stripe-signature');
-  var ev = parseWebhookEvent(body, sig);
+  try {
+    var body = await c.req.text();
+    var sig = c.req.header('stripe-signature');
+    var ev = parseWebhookEvent(body, sig);
 
-  if (ev.action === 'rejected') {
-    return c.json({ error: ev.reason }, 400);
+    if (ev.action === 'rejected') {
+      return c.json({ error: ev.reason }, 400);
+    }
+
+    // Idempotency: skip already-processed events
+    if (ev.eventId && isEventProcessed(ev.eventId)) {
+      return c.json({ received: true, duplicate: true });
+    }
+
+    if (ev.action === 'activate') {
+      upsertSubscriber(ev.email, ev.customerId, ev.subscriptionId, 'pro');
+      console.log('Pro activated:', ev.email);
+    } else if (ev.action === 'deactivate') {
+      downgradeByCustomerId(ev.customerId);
+      console.log('Pro deactivated:', ev.customerId);
+    }
+
+    if (ev.eventId) markEventProcessed(ev.eventId);
+    return c.json({ received: true });
+  } catch (err) {
+    console.error('Stripe webhook error:', err.message);
+    return c.json({ error: 'webhook_config_error', message: err.message }, 503);
   }
-
-  // Idempotency: skip already-processed events
-  if (ev.eventId && isEventProcessed(ev.eventId)) {
-    return c.json({ received: true, duplicate: true });
-  }
-
-  if (ev.action === 'activate') {
-    upsertSubscriber(ev.email, ev.customerId, ev.subscriptionId, 'pro');
-    console.log('Pro activated:', ev.email);
-  } else if (ev.action === 'deactivate') {
-    downgradeByCustomerId(ev.customerId);
-    console.log('Pro deactivated:', ev.customerId);
-  }
-
-  if (ev.eventId) markEventProcessed(ev.eventId);
-  return c.json({ received: true });
 });
 
 // --- Pro success page ---

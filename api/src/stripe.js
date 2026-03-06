@@ -1,8 +1,14 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
-var STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-var STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 var BASE_URL = process.env.BASE_URL || 'https://envburn.onrender.com';
+
+function getStripeSecretKey() {
+  return process.env.STRIPE_SECRET_KEY;
+}
+
+function getWebhookSecret() {
+  return process.env.STRIPE_WEBHOOK_SECRET;
+}
 
 function verifySignature(payload, sigHeader, secret) {
   if (!secret || !sigHeader) return false;
@@ -26,10 +32,11 @@ function verifySignature(payload, sigHeader, secret) {
 }
 
 async function stripeRequest(path, method, body) {
+  var key = getStripeSecretKey();
   var res = await fetch('https://api.stripe.com/v1' + path, {
     method: method,
     headers: {
-      'Authorization': 'Bearer ' + STRIPE_SECRET_KEY,
+      'Authorization': 'Bearer ' + key,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: body ? new URLSearchParams(body).toString() : undefined,
@@ -51,11 +58,12 @@ export async function createCheckoutSession(email, priceId) {
 }
 
 export function parseWebhookEvent(rawBody, signature) {
-  if (!STRIPE_WEBHOOK_SECRET) {
-    console.error('STRIPE_WEBHOOK_SECRET not configured — rejecting webhook');
-    return { action: 'rejected', reason: 'webhook_secret_not_configured' };
+  // CRITICAL: Hard fail if webhook secret not configured
+  var webhookSecret = getWebhookSecret();
+  if (!webhookSecret) {
+    throw new Error('STRIPE_WEBHOOK_SECRET not configured — refusing to process webhooks');
   }
-  if (!verifySignature(rawBody, signature, STRIPE_WEBHOOK_SECRET)) {
+  if (!verifySignature(rawBody, signature, webhookSecret)) {
     console.error('Stripe webhook signature verification failed');
     return { action: 'rejected', reason: 'invalid_signature' };
   }
@@ -76,5 +84,5 @@ export function parseWebhookEvent(rawBody, signature) {
 }
 
 export function isConfigured() {
-  return !!(STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID);
+  return !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID && process.env.STRIPE_WEBHOOK_SECRET);
 }
