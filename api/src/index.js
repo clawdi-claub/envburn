@@ -8,13 +8,31 @@ import { nanoid } from 'nanoid';
 import db, { getSubscriber, upsertSubscriber, downgradeByCustomerId, isPro } from './db.js';
 import { generateKey, encrypt, decrypt } from './crypto.js';
 import { createCheckoutSession, parseWebhookEvent, isConfigured } from './stripe.js';
+import { rateLimit } from './ratelimit.js';
 
 var __dirname = dirname(fileURLToPath(import.meta.url));
 var WEB_DIR = join(__dirname, '..', '..', 'web');
 var BASE_URL = process.env.BASE_URL || 'https://envburn.onrender.com';
 
 var app = new Hono();
-app.use('*', cors());
+// Security headers
+app.use('*', async function(c, next) {
+  await next();
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('X-Frame-Options', 'DENY');
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (process.env.NODE_ENV === 'production') {
+    c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+});
+
+// CORS: restrict to same-origin for API
+app.use('/api/*', cors({ origin: function(origin) { return origin || '*'; }, allowMethods: ['GET', 'POST'] }));
+
+// Rate limits
+app.use('/api/secrets', rateLimit({ prefix: 'create', window: 3600000, max: 50, message: 'Too many secrets created. Try again later.' }));
+app.use('/api/upgrade', rateLimit({ prefix: 'upgrade', window: 60000, max: 10, message: 'Too many requests.' }));
 
 // --- Limits ---
 var LIMITS = {
@@ -172,7 +190,8 @@ app.post('/api/upgrade', async function(c) {
 // --- Stripe: webhook ---
 app.post('/stripe/webhook', async function(c) {
   var body = await c.req.text();
-  var ev = parseWebhookEvent(body);
+  var sig = c.req.header('stripe-signature');
+  var ev = parseWebhookEvent(body, sig);
 
   if (ev.action === 'activate') {
     upsertSubscriber(ev.email, ev.customerId, ev.subscriptionId, 'pro');
