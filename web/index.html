@@ -802,12 +802,12 @@ function setTier(tier) {
     opt24h.disabled = true; opt24h.textContent = '24 hours (Pro)';
     opt7d.disabled = true; opt7d.textContent = '7 days (Pro)';
     opt30d.disabled = true; opt30d.textContent = '30 days (Pro)';
-    document.getElementById('views').max = 100;
+    document.getElementById('views').max = 3;
     // Reset TTL selection if a Pro-only option was selected
     var ttlVal = parseInt(document.getElementById('ttl').value);
     if (ttlVal > 3600) document.getElementById('ttl').value = '3600';
-    if (parseInt(document.getElementById('views').value) > 100) {
-      document.getElementById('views').value = 100;
+    if (parseInt(document.getElementById('views').value) > 3) {
+      document.getElementById('views').value = 3;
     }
   }
 }
