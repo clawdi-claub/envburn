@@ -41,6 +41,8 @@ db.exec([
 
 // Add owner_email column if missing (migration)
 try { db.exec('ALTER TABLE secrets ADD COLUMN owner_email TEXT'); } catch (e) { /* already exists */ }
+// Add pro_code column if missing (migration)
+try { db.exec('ALTER TABLE subscribers ADD COLUMN pro_code TEXT'); } catch (e) { /* already exists */ }
 
 // Idempotency table for Stripe events
 db.exec([
@@ -85,6 +87,25 @@ export function isPro(email) {
   if (!email) return false;
   var row = db.prepare("SELECT tier FROM subscribers WHERE email = ?").get(email);
   return !!(row && row.tier === 'pro');
+}
+
+export function generateProCode() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+export function setProCode(email, code) {
+  db.prepare('UPDATE subscribers SET pro_code = ? WHERE email = ?').run(code, email);
+}
+
+export function getProCode(email) {
+  var row = db.prepare('SELECT pro_code FROM subscribers WHERE email = ?').get(email);
+  return row ? row.pro_code : null;
+}
+
+export function verifyProCode(email, code) {
+  if (!email || !code) return false;
+  var row = db.prepare("SELECT pro_code, tier FROM subscribers WHERE email = ?").get(email);
+  return !!(row && row.tier === 'pro' && row.pro_code === String(code));
 }
 
 export function isEventProcessed(eventId) {

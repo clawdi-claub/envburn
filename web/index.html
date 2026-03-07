@@ -302,6 +302,50 @@
       transition: color var(--transition);
     }
     .email-clear:hover { color: var(--text); }
+    .pro-code-row {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pro-code-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .pro-code-input {
+      width: 100px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--accent);
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'SF Mono', SFMono-Regular, ui-monospace, Consolas, monospace;
+      letter-spacing: 4px;
+      text-align: center;
+    }
+    .pro-code-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+    .pro-code-verify {
+      padding: 8px 16px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', system-ui, sans-serif;
+      transition: background var(--transition);
+    }
+    .pro-code-verify:hover { background: var(--accent-hover); }
+    .pro-code-error {
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 4px;
+    }
     .email-input:focus {
       outline: none;
       border-color: var(--accent);
@@ -745,6 +789,12 @@ JWT_SECRET=your-jwt-secret"></textarea>
   </div>
   <p class="email-note">Enter your email to check Pro status or <a href="#pricing">upgrade for $2/mo</a></p>
   <div class="tier-info" id="tierInfo"></div>
+  <div class="pro-code-row" id="proCodeRow" style="display:none">
+    <label for="proCode">Pro Code:</label>
+    <input type="text" id="proCode" class="pro-code-input" placeholder="4-digit code" maxlength="4" pattern="\d{4}" inputmode="numeric">
+    <button class="pro-code-verify" onclick="verifyCode()">Verify</button>
+  </div>
+  <div class="pro-code-error" id="proCodeError" style="display:none"></div>
 
   <button class="cta" onclick="createSecret()" id="createBtn">
     Create Secret Link
@@ -850,6 +900,21 @@ function deleteEmailCookie() {
   document.cookie = 'eb=;path=/;max-age=0;SameSite=Lax';
 }
 
+function saveProCodeCookie(code) {
+  var encoded = btoa(code);
+  document.cookie = 'pc=' + encoded + ';path=/;max-age=' + (365 * 86400) + ';SameSite=Lax';
+}
+
+function getProCodeCookie() {
+  var match = document.cookie.match(/(?:^|;\s*)pc=([^;]+)/);
+  if (!match) return null;
+  try { return atob(match[1]); } catch(e) { return null; }
+}
+
+function deleteProCodeCookie() {
+  document.cookie = 'pc=;path=/;max-age=0;SameSite=Lax';
+}
+
 function updateClearBtn() {
   var clearBtn = document.getElementById('emailClear');
   var email = emailEl.value.trim();
@@ -858,7 +923,11 @@ function updateClearBtn() {
 
 function clearEmailCookie() {
   deleteEmailCookie();
+  deleteProCodeCookie();
   emailEl.value = '';
+  document.getElementById('proCode').value = '';
+  document.getElementById('proCodeRow').style.display = 'none';
+  document.getElementById('proCodeError').style.display = 'none';
   document.getElementById('tierInfo').style.display = 'none';
   setTier('free');
   updateClearBtn();
@@ -868,13 +937,15 @@ function clearEmailCookie() {
 var emailEl = document.getElementById('userEmail');
 var debounceTimer;
 
-// Restore email from cookie on load
+// Restore email + pro code from cookies on load
 (function() {
   var saved = getEmailCookie();
+  var savedCode = getProCodeCookie();
   if (saved && !emailEl.value) {
     emailEl.value = saved;
+    if (savedCode) document.getElementById('proCode').value = savedCode;
     updateClearBtn();
-    if (isValidEmail(saved)) checkTier(saved);
+    if (isValidEmail(saved)) checkTier(saved, savedCode);
   }
 })();
 
@@ -891,25 +962,59 @@ emailEl.addEventListener('input', function() {
   debounceTimer = setTimeout(function() { checkTier(email); }, 600);
 });
 
-function checkTier(email) {
+function checkTier(email, proCode) {
+  var payload = { email: email };
+  if (proCode) payload.pro_code = proCode;
+  else {
+    var savedCode = getProCodeCookie();
+    if (savedCode) payload.pro_code = savedCode;
+  }
   fetch(API_URL + '/api/account/check', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email })
+    body: JSON.stringify(payload)
   })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var info = document.getElementById('tierInfo');
+      var codeRow = document.getElementById('proCodeRow');
+      var codeErr = document.getElementById('proCodeError');
       if (d.tier === 'pro') {
         setTier('pro');
+        codeRow.style.display = 'none';
+        codeErr.style.display = 'none';
         info.innerHTML = '<span class="tier-badge pro">PRO</span> Max size: 1MB &bull; Max TTL: 30 days &bull; Views: 10,000';
+      } else if (d.tier === 'pending_code') {
+        setTier('free');
+        codeRow.style.display = 'flex';
+        if (d.error) {
+          codeErr.textContent = d.error;
+          codeErr.style.display = 'block';
+        } else {
+          codeErr.style.display = 'none';
+        }
+        info.innerHTML = '<span class="tier-badge pro" style="opacity:0.5">PRO</span> Enter your 4-digit Pro code to unlock';
       } else {
         setTier('free');
+        codeRow.style.display = 'none';
+        codeErr.style.display = 'none';
         info.innerHTML = '<span class="tier-badge free">FREE</span> Max size: 100KB &bull; Max TTL: 1 hour &bull; <a href="#pricing" style="color:var(--accent)">Upgrade to Pro</a>';
       }
       info.style.display = 'block';
     })
     .catch(function() {});
+}
+
+function verifyCode() {
+  var email = emailEl.value.trim();
+  var code = document.getElementById('proCode').value.trim();
+  if (!code || code.length !== 4) {
+    document.getElementById('proCodeError').textContent = 'Enter your 4-digit code';
+    document.getElementById('proCodeError').style.display = 'block';
+    return;
+  }
+  saveProCodeCookie(code);
+  checkTier(email, code);
 }
 
 function setTier(tier) {
@@ -962,6 +1067,8 @@ async function createSecret() {
   try {
     var body = { content: content, ttl: ttl, views: views, burnAfterRead: views === 1 };
     if (email) body.email = email;
+    var pc = document.getElementById('proCode').value.trim() || getProCodeCookie();
+    if (pc) body.pro_code = pc;
 
     var response = await fetch(API_URL + '/api/secrets', {
       method: 'POST',

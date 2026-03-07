@@ -5,12 +5,35 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
 import { nanoid } from 'nanoid';
-import db, { getSubscriber, upsertSubscriber, downgradeByCustomerId, isPro, isEventProcessed, markEventProcessed } from './db.js';
+import db, { getSubscriber, upsertSubscriber, downgradeByCustomerId, isPro, isEventProcessed, markEventProcessed, generateProCode, setProCode, getProCode, verifyProCode } from './db.js';
 import { generateKey, encrypt, decrypt } from './crypto.js';
 import { createCheckoutSession, parseWebhookEvent, isConfigured } from './stripe.js';
 import { rateLimit } from './ratelimit.js';
 
+import { Resend } from 'resend';
+
 var __dirname = dirname(fileURLToPath(import.meta.url));
+
+async function sendProCodeEmail(email, code) {
+  var apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) { console.log('RESEND_API_KEY not set, skipping email. Pro code for', email, ':', code); return; }
+  var resend = new Resend(apiKey);
+  await resend.emails.send({
+    from: 'EnvBurn <noreply@envburn.com>',
+    to: email,
+    subject: 'Your EnvBurn Pro Code',
+    html: [
+      '<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0F172A;color:#F8FAFC;border-radius:12px">',
+      '<h1 style="font-size:20px;margin:0 0 8px">Your Pro Code</h1>',
+      '<p style="color:#CBD5E1;font-size:14px;margin:0 0 24px">Use this code with your email to unlock Pro features.</p>',
+      '<div style="background:#1E293B;border:1px solid #334155;border-radius:8px;padding:20px;text-align:center;margin-bottom:24px">',
+      '<span style="font-size:32px;font-weight:800;letter-spacing:8px;color:#22C55E">' + code + '</span>',
+      '</div>',
+      '<p style="color:#64748B;font-size:12px;margin:0">Keep this code safe. You\'ll need it each time you use EnvBurn with your Pro email.</p>',
+      '</div>',
+    ].join(''),
+  });
+}
 var WEB_DIR = join(__dirname, '..', '..', 'web');
 var BASE_URL = process.env.BASE_URL || 'https://envburn.onrender.com';
 
@@ -116,15 +139,24 @@ app.get('/health', function(c) {
   }, dbOk && stripeOk ? 200 : 503);
 });
 
-// --- Check Pro status (requires email in query, only returns tier + limits, no PII) ---
+// --- Check Pro status (requires email + pro_code for Pro unlock) ---
 app.post('/api/account/check', async function(c) {
   var body = await c.req.json();
   var email = body.email ? body.email.toLowerCase().trim() : null;
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return c.json({ error: 'Valid email required' }, 400);
-  return c.json({
-    tier: isPro(email) ? 'pro' : 'free',
-    limits: getLimits(email),
-  });
+  var proCode = body.pro_code ? String(body.pro_code).trim() : null;
+  var hasPro = isPro(email);
+  // Pro requires valid code
+  if (hasPro && proCode && verifyProCode(email, proCode)) {
+    return c.json({ tier: 'pro', limits: getLimits(email), needsCode: false });
+  }
+  if (hasPro && !proCode) {
+    return c.json({ tier: 'pending_code', limits: getLimits(null), needsCode: true });
+  }
+  if (hasPro && proCode && !verifyProCode(email, proCode)) {
+    return c.json({ tier: 'pending_code', limits: getLimits(null), needsCode: true, error: 'Invalid Pro code' });
+  }
+  return c.json({ tier: 'free', limits: getLimits(email), needsCode: false });
 });
 
 // GET /api/account/:email - Check tier by email (for client-side validation)
@@ -147,6 +179,9 @@ app.post('/api/secrets', async function(c) {
   var rawEmail = body.email ? body.email.toLowerCase().trim() : null;
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   var email = (rawEmail && EMAIL_RE.test(rawEmail)) ? rawEmail : null;
+  var proCode = body.pro_code ? String(body.pro_code).trim() : null;
+  // Only grant Pro limits if valid code provided
+  var effectiveEmail = (email && proCode && verifyProCode(email, proCode)) ? email : null;
   var ttl = body.ttl || 3600;
   var views = body.views || 1;
   var burnAfterRead = body.burnAfterRead !== undefined ? body.burnAfterRead : true;
@@ -155,7 +190,7 @@ app.post('/api/secrets', async function(c) {
     return c.json({ error: 'content is required' }, 400);
   }
 
-  var limits = getLimits(email);
+  var limits = getLimits(effectiveEmail);
 
   if (content.length > limits.maxSize) {
     return c.json({ error: 'Content too large (max ' + Math.round(limits.maxSize / 1000) + 'KB). Upgrade to Pro for 1MB.' }, 400);
@@ -183,7 +218,7 @@ app.post('/api/secrets', async function(c) {
     expiresAt: new Date(expiresAt * 1000).toISOString(),
     burnAfterRead: burnAfterRead,
     viewsRemaining: safeViews,
-    tier: isPro(email) ? 'pro' : 'free',
+    tier: effectiveEmail ? 'pro' : 'free',
   }, 201);
 });
 
@@ -273,7 +308,11 @@ app.post('/stripe/webhook', async function(c) {
 
     if (ev.action === 'activate') {
       upsertSubscriber(ev.email, ev.customerId, ev.subscriptionId, 'pro');
-      console.log('Pro activated:', ev.email);
+      var code = generateProCode();
+      setProCode(ev.email, code);
+      console.log('Pro activated:', ev.email, 'code:', code);
+      // Send pro code via email (best-effort)
+      sendProCodeEmail(ev.email, code).catch(function(e) { console.error('Failed to send pro code email:', e.message); });
     } else if (ev.action === 'deactivate') {
       downgradeByCustomerId(ev.customerId);
       console.log('Pro deactivated:', ev.customerId);
@@ -288,7 +327,23 @@ app.post('/stripe/webhook', async function(c) {
 });
 
 // --- Pro success page ---
-app.get('/pro/success', function(c) {
+app.get('/pro/success', async function(c) {
+  // Try to get pro code from session
+  var sessionId = c.req.query('session_id');
+  var proCode = '';
+  var proEmail = '';
+  if (sessionId && process.env.STRIPE_SECRET_KEY) {
+    try {
+      var Stripe = (await import('stripe')).default;
+      var stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      var session = await stripe.checkout.sessions.retrieve(sessionId);
+      proEmail = session.customer_email || session.customer_details?.email || '';
+      if (proEmail) {
+        var stored = getProCode(proEmail.toLowerCase().trim());
+        if (stored) proCode = stored;
+      }
+    } catch(e) { console.error('Failed to retrieve checkout session:', e.message); }
+  }
   return c.html([
     '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EnvBurn Pro — Activated</title>',
     '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
@@ -321,7 +376,14 @@ app.get('/pro/success', function(c) {
     '<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Up to 10,000 views per secret</li>',
     '<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Password protection</li>',
     '</ul>',
-    '<p class="note">Use the same email when creating secrets to unlock your Pro limits.</p>',
+    (proCode ? [
+      '<div style="background:#1E293B;border:1px solid #334155;border-radius:10px;padding:20px;margin:20px 0;text-align:center">',
+      '<p style="color:#64748B;font-size:12px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.05em;font-weight:600">Your Pro Code</p>',
+      '<span style="font-size:36px;font-weight:800;letter-spacing:10px;color:#22C55E">' + proCode + '</span>',
+      '<p style="color:#64748B;font-size:12px;margin:10px 0 0">Save this code — you\'ll need it to unlock Pro features.</p>',
+      '</div>',
+    ].join('') : ''),
+    '<p class="note">Use your email and Pro code when creating secrets to unlock Pro limits.' + (proCode ? ' We\'ve also emailed you the code.' : '') + '</p>',
     '<a href="/" class="cta"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Create a Secret</a>',
     '</div></body></html>',
   ].join(''));

@@ -12,10 +12,14 @@ services:
         value: https://envburn.onrender.com
       - key: STRIPE_PK
         fromSecret: stripe-pk
-      - key: STRIPE_SK
+      - key: STRIPE_SECRET_KEY
         fromSecret: stripe-sk
+      - key: STRIPE_PRICE_ID
+        fromSecret: stripe-price-id
       - key: STRIPE_WEBHOOK_SECRET
         fromSecret: stripe-webhook-secret
+      - key: RESEND_API_KEY
+        fromSecret: resend-api-key
       - key: ENVBURN_PRO
         value: prod_U5tp5f9TgvWkBq
       - key: WEBHOOKMAIL_PRO
