@@ -748,7 +748,7 @@ function checkTier(email) {
         info.innerHTML = '<span class="tier-badge pro">PRO</span> Max size: 1MB &bull; Max TTL: 30 days &bull; Views: 10,000';
       } else {
         setTier('free');
-        info.innerHTML = '<span class="tier-badge free">FREE</span> Max size: 100KB &bull; Max TTL: 7 days &bull; <a href="#pricing" style="color:var(--accent)">Upgrade to Pro</a>';
+        info.innerHTML = '<span class="tier-badge free">FREE</span> Max size: 100KB &bull; Max TTL: 1 hour &bull; <a href="#pricing" style="color:var(--accent)">Upgrade to Pro</a>';
       }
       info.style.display = 'block';
     })
