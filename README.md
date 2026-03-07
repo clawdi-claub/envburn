@@ -41,7 +41,7 @@ curl "https://envburn.onrender.com/api/secrets/{id}?key={key}"
 | | Free | Pro ($2/mo) |
 |---|---|---|
 | Secrets | Unlimited | Unlimited |
-| Max TTL | 7 days | 30 days |
+| Max TTL | 1 hour | 30 days |
 | Max size | 100KB | 1MB |
 | Views per secret | 100 | Unlimited |
 | Password protection | — | ✓ |

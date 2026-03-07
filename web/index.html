@@ -622,8 +622,8 @@ JWT_SECRET=your-jwt-secret"></textarea>
         <option value="300">5 min</option>
         <option value="900">15 min</option>
         <option value="3600" selected>1 hour</option>
-        <option value="86400">24 hours</option>
-        <option value="604800">7 days</option>
+        <option value="86400" disabled id="ttl-24h">24 hours (Pro)</option>
+        <option value="604800" disabled id="ttl-7d">7 days (Pro)</option>
         <option value="2592000" disabled id="ttl-30d">30 days (Pro)</option>
       </select>
     </div>
@@ -661,7 +661,7 @@ JWT_SECRET=your-jwt-secret"></textarea>
         </li>
         <li>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          7-day max expiry
+          1-hour max expiry
         </li>
         <li>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -757,15 +757,22 @@ function checkTier(email) {
 
 function setTier(tier) {
   currentTier = tier;
+  var opt24h = document.getElementById('ttl-24h');
+  var opt7d = document.getElementById('ttl-7d');
   var opt30d = document.getElementById('ttl-30d');
   if (tier === 'pro') {
-    opt30d.disabled = false;
-    opt30d.textContent = '30 days';
+    opt24h.disabled = false; opt24h.textContent = '24 hours';
+    opt7d.disabled = false; opt7d.textContent = '7 days';
+    opt30d.disabled = false; opt30d.textContent = '30 days';
     document.getElementById('views').max = 10000;
   } else {
-    opt30d.disabled = true;
-    opt30d.textContent = '30 days (Pro)';
+    opt24h.disabled = true; opt24h.textContent = '24 hours (Pro)';
+    opt7d.disabled = true; opt7d.textContent = '7 days (Pro)';
+    opt30d.disabled = true; opt30d.textContent = '30 days (Pro)';
     document.getElementById('views').max = 100;
+    // Reset TTL selection if a Pro-only option was selected
+    var ttlVal = parseInt(document.getElementById('ttl').value);
+    if (ttlVal > 3600) document.getElementById('ttl').value = '3600';
     if (parseInt(document.getElementById('views').value) > 100) {
       document.getElementById('views').value = 100;
     }
