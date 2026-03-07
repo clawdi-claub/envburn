@@ -334,6 +334,7 @@
     /* Result */
     .result {
       display: none;
+      position: relative;
       max-width: 720px;
       margin: 0 auto 40px;
       padding: 24px;
@@ -342,6 +343,38 @@
       border-radius: var(--radius-lg);
       animation: fadeIn 0.3s ease;
     }
+    .result-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      font-size: 18px;
+      transition: color var(--transition);
+    }
+    .result-close:hover { color: var(--text); }
+    .url-redacted {
+      color: var(--text-muted) !important;
+      user-select: none;
+    }
+    .reveal-btn {
+      background: var(--surface);
+      color: var(--text);
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Inter', system-ui, sans-serif;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .reveal-btn:hover { background: var(--surface-hover); }
     .result.error {
       background: var(--error-bg);
       border-color: var(--error-border);
@@ -813,13 +846,21 @@ async function createSecret() {
         ? 'It will self-destruct after first view.'
         : 'It allows ' + views + ' views.';
 
+      var fullUrl = data.url;
+      var redactedUrl = fullUrl.substring(0, fullUrl.indexOf('#') + 4) + '••••••••••••••••';
+
       resultDiv.className = 'result container';
       resultDiv.innerHTML =
-        '<h3><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Secret Created' + tierLabel + '</h3>'
+        '<button class="result-close" onclick="closeResult()" title="Close">✕</button>'
+        + '<h3><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Secret Created' + tierLabel + '</h3>'
         + '<p class="result-subtitle">' + viewsText + '</p>'
-        + '<div class="url-box"><code id="secretUrl">' + data.url + '</code>'
+        + '<div class="url-box"><code id="secretUrl" class="url-redacted">' + redactedUrl + '</code>'
+        + '<button class="reveal-btn" id="revealBtn" onclick="toggleReveal()">Reveal</button>'
         + '<button class="copy-btn" id="copyBtn" onclick="copyUrl()">Copy</button></div>'
         + '<p class="result-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Expires: ' + new Date(data.expiresAt).toLocaleString() + '</p>';
+      resultDiv.dataset.fullUrl = fullUrl;
+      resultDiv.dataset.redactedUrl = redactedUrl;
+      resultDiv.dataset.revealed = 'false';
       resultDiv.style.display = 'block';
       resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       btn.textContent = 'Created';
@@ -837,12 +878,38 @@ async function createSecret() {
 }
 
 function copyUrl() {
-  var url = document.getElementById('secretUrl').textContent;
+  var resultDiv = document.getElementById('result');
+  var url = resultDiv.dataset.fullUrl;
   var btn = document.getElementById('copyBtn');
   navigator.clipboard.writeText(url);
   btn.textContent = 'Copied!';
   btn.classList.add('copied');
   setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+}
+
+function closeResult() {
+  var resultDiv = document.getElementById('result');
+  resultDiv.style.display = 'none';
+  resultDiv.innerHTML = '';
+  var btn = document.getElementById('createBtn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Create Secret Link'; btn.style.background = ''; }
+}
+
+function toggleReveal() {
+  var resultDiv = document.getElementById('result');
+  var urlEl = document.getElementById('secretUrl');
+  var revealBtn = document.getElementById('revealBtn');
+  if (resultDiv.dataset.revealed === 'false') {
+    urlEl.textContent = resultDiv.dataset.fullUrl;
+    urlEl.classList.remove('url-redacted');
+    revealBtn.textContent = 'Hide';
+    resultDiv.dataset.revealed = 'true';
+  } else {
+    urlEl.textContent = resultDiv.dataset.redactedUrl;
+    urlEl.classList.add('url-redacted');
+    revealBtn.textContent = 'Reveal';
+    resultDiv.dataset.revealed = 'false';
+  }
 }
 
 function upgrade() {
