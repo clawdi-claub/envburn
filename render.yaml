@@ -14,6 +14,8 @@ services:
         fromSecret: stripe-pk
       - key: STRIPE_SK
         fromSecret: stripe-sk
+      - key: STRIPE_WEBHOOK_SECRET
+        fromSecret: stripe-webhook-secret
       - key: ENVBURN_PRO
         value: prod_U5tp5f9TgvWkBq
       - key: WEBHOOKMAIL_PRO
