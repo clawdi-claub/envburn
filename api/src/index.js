@@ -120,7 +120,7 @@ app.get('/health', function(c) {
 app.post('/api/account/check', async function(c) {
   var body = await c.req.json();
   var email = body.email ? body.email.toLowerCase().trim() : null;
-  if (!email) return c.json({ error: 'Email required' }, 400);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return c.json({ error: 'Valid email required' }, 400);
   return c.json({
     tier: isPro(email) ? 'pro' : 'free',
     limits: getLimits(email),
@@ -131,7 +131,9 @@ app.post('/api/account/check', async function(c) {
 app.post('/api/secrets', async function(c) {
   var body = await c.req.json();
   var content = body.content;
-  var email = body.email ? body.email.toLowerCase().trim() : null;
+  var rawEmail = body.email ? body.email.toLowerCase().trim() : null;
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  var email = (rawEmail && EMAIL_RE.test(rawEmail)) ? rawEmail : null;
   var ttl = body.ttl || 3600;
   var views = body.views || 1;
   var burnAfterRead = body.burnAfterRead !== undefined ? body.burnAfterRead : true;
@@ -275,14 +277,39 @@ app.post('/stripe/webhook', async function(c) {
 // --- Pro success page ---
 app.get('/pro/success', function(c) {
   return c.html([
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>EnvBurn Pro</title>',
-    '<style>body{font-family:system-ui;background:#0f0f0f;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}',
-    '.c{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:48px;text-align:center;max-width:420px}',
-    'h1{background:linear-gradient(135deg,#ff6b6b,#feca57);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}',
-    'p{color:#aaa;line-height:1.6}a{color:#feca57}</style></head><body>',
-    '<div class="c"><h1>Pro Activated!</h1>',
-    '<p>30-day expiry, 1MB secrets, unlimited views.<br>Use the same email when creating secrets to unlock Pro limits.</p>',
-    '<p style="margin-top:20px"><a href="/">Create a Secret &rarr;</a></p>',
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EnvBurn Pro — Activated</title>',
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+    '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">',
+    '<style>',
+    ':root{--bg:#0F172A;--surface:#1E293B;--border:#334155;--text:#F8FAFC;--text-secondary:#CBD5E1;--text-muted:#64748B;--accent:#22C55E;--accent-subtle:rgba(34,197,94,0.1);--radius-lg:16px}',
+    '*{margin:0;padding:0;box-sizing:border-box}',
+    'body{font-family:"Inter",system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}',
+    '.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px;text-align:center;max-width:480px;width:100%;animation:fadeIn .4s ease}',
+    '.icon{width:64px;height:64px;background:var(--accent-subtle);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}',
+    '.icon svg{color:var(--accent);width:32px;height:32px}',
+    'h1{font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px}',
+    '.badge{display:inline-block;background:var(--accent);color:var(--bg);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:20px;letter-spacing:0.02em}',
+    '.features{list-style:none;text-align:left;margin:20px 0;padding:0}',
+    '.features li{color:var(--text-secondary);font-size:14px;padding:8px 0;border-bottom:1px solid rgba(51,65,85,0.5);display:flex;align-items:center;gap:10px}',
+    '.features li:last-child{border-bottom:none}',
+    '.features li svg{color:var(--accent);width:16px;height:16px;flex-shrink:0}',
+    '.note{color:var(--text-muted);font-size:13px;margin-top:20px;line-height:1.6}',
+    '.cta{display:inline-flex;align-items:center;gap:8px;margin-top:24px;padding:12px 28px;background:var(--accent);color:var(--bg);font-size:14px;font-weight:700;font-family:"Inter",system-ui,sans-serif;border:none;border-radius:10px;text-decoration:none;cursor:pointer;transition:background .2s}',
+    '.cta:hover{background:#16A34A}',
+    '@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}',
+    '</style></head><body>',
+    '<div class="card">',
+    '<div class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>',
+    '<span class="badge">PRO ACTIVATED</span>',
+    '<h1>You\'re all set!</h1>',
+    '<ul class="features">',
+    '<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> 30-day secret expiry</li>',
+    '<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Up to 1MB secret size</li>',
+    '<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Up to 10,000 views per secret</li>',
+    '<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Password protection</li>',
+    '</ul>',
+    '<p class="note">Use the same email when creating secrets to unlock your Pro limits.</p>',
+    '<a href="/" class="cta"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Create a Secret</a>',
     '</div></body></html>',
   ].join(''));
 });

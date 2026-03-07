@@ -247,13 +247,19 @@
     /* Email row */
     .email-row {
       margin-top: 14px;
+      position: relative;
       display: flex;
       gap: 10px;
       align-items: center;
     }
-    .email-input {
+    .email-wrap {
       flex: 1;
-      padding: 10px 14px;
+      position: relative;
+    }
+    .email-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 36px 10px 14px;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -262,6 +268,22 @@
       font-family: 'Inter', system-ui, sans-serif;
       transition: border-color var(--transition), box-shadow var(--transition);
     }
+    .email-clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 4px;
+      line-height: 1;
+      display: none;
+      transition: color var(--transition);
+    }
+    .email-clear:hover { color: var(--text); }
     .email-input:focus {
       outline: none;
       border-color: var(--accent);
@@ -698,7 +720,10 @@ JWT_SECRET=your-jwt-secret"></textarea>
   </div>
 
   <div class="email-row">
-    <input type="email" id="userEmail" class="email-input" placeholder="your@email.com (optional — unlocks Pro limits)">
+    <div class="email-wrap">
+      <input type="email" id="userEmail" class="email-input" placeholder="your@email.com (optional — unlocks Pro limits)">
+      <button class="email-clear" id="emailClear" title="Clear saved email" onclick="clearEmailCookie()">✕</button>
+    </div>
   </div>
   <p class="email-note">Enter your email to check Pro status or <a href="#pricing">upgrade for $2/mo</a></p>
   <div class="tier-info" id="tierInfo"></div>
@@ -788,22 +813,72 @@ JWT_SECRET=your-jwt-secret"></textarea>
 <script>
 var API_URL = window.location.origin;
 var currentTier = 'free';
+var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function isValidEmail(e) { return EMAIL_RE.test(e); }
+
+function saveEmailCookie(email) {
+  var encoded = btoa(email);
+  document.cookie = 'eb=' + encoded + ';path=/;max-age=' + (365 * 86400) + ';SameSite=Lax';
+}
+
+function getEmailCookie() {
+  var match = document.cookie.match(/(?:^|;\s*)eb=([^;]+)/);
+  if (!match) return null;
+  try { return atob(match[1]); } catch(e) { return null; }
+}
+
+function deleteEmailCookie() {
+  document.cookie = 'eb=;path=/;max-age=0;SameSite=Lax';
+}
+
+function updateClearBtn() {
+  var clearBtn = document.getElementById('emailClear');
+  var email = emailEl.value.trim();
+  clearBtn.style.display = (isValidEmail(email) || getEmailCookie()) ? 'block' : 'none';
+}
+
+function clearEmailCookie() {
+  deleteEmailCookie();
+  emailEl.value = '';
+  document.getElementById('tierInfo').style.display = 'none';
+  setTier('free');
+  updateClearBtn();
+  emailEl.focus();
+}
 
 var emailEl = document.getElementById('userEmail');
 var debounceTimer;
+
+// Restore email from cookie on load
+(function() {
+  var saved = getEmailCookie();
+  if (saved && !emailEl.value) {
+    emailEl.value = saved;
+    updateClearBtn();
+    if (isValidEmail(saved)) checkTier(saved);
+  }
+})();
+
 emailEl.addEventListener('input', function() {
   clearTimeout(debounceTimer);
   var email = emailEl.value.trim();
-  if (!email || email.indexOf('@') === -1) {
+  updateClearBtn();
+  if (!email || !isValidEmail(email)) {
     document.getElementById('tierInfo').style.display = 'none';
     setTier('free');
     return;
   }
+  saveEmailCookie(email);
   debounceTimer = setTimeout(function() { checkTier(email); }, 600);
 });
 
 function checkTier(email) {
-  fetch(API_URL + '/api/account/' + encodeURIComponent(email))
+  fetch(API_URL + '/api/account/check', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var info = document.getElementById('tierInfo');
@@ -952,12 +1027,13 @@ function toggleReveal() {
 
 function upgrade() {
   var email = document.getElementById('userEmail').value.trim();
-  if (!email || email.indexOf('@') === -1) {
+  if (!email || !isValidEmail(email)) {
     document.getElementById('userEmail').focus();
     document.getElementById('userEmail').style.borderColor = 'var(--accent)';
-    alert('Enter your email first, then click Upgrade.');
+    alert('Enter a valid email first, then click Upgrade.');
     return;
   }
+  saveEmailCookie(email);
   fetch(API_URL + '/api/upgrade', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
