@@ -299,4 +299,4 @@ if (process.env.NODE_ENV === 'production' && !process.env.STRIPE_WEBHOOK_SECRET)
 
 var port = parseInt(process.env.PORT || '3000', 10);
 console.log('EnvBurn running on http://localhost:' + port);
-serve({ fetch: app.fetch, port: port });
+serve({ fetch: app.fetch, port: port, hostname: '0.0.0.0' });
