@@ -7,7 +7,7 @@ import { readFileSync } from 'fs';
 import { nanoid } from 'nanoid';
 import db, { getSubscriber, upsertSubscriber, downgradeByCustomerId, isPro, isEventProcessed, markEventProcessed, generateProCode, setProCode, getProCode, verifyProCode } from './db.js';
 import { generateKey, encrypt, decrypt } from './crypto.js';
-import { createCheckoutSession, parseWebhookEvent, isConfigured } from './stripe.js';
+import { createCheckoutSession, parseWebhookEvent, isConfigured, stripeRequest } from './stripe.js';
 import { rateLimit } from './ratelimit.js';
 
 import { Resend } from 'resend';
@@ -307,15 +307,35 @@ app.post('/stripe/webhook', async function(c) {
     }
 
     if (ev.action === 'activate') {
-      upsertSubscriber(ev.email, ev.customerId, ev.subscriptionId, 'pro');
+      // Fetch customer email from Stripe
+      var email = null;
+      try {
+        var customer = await stripeRequest('/customers/' + ev.customerId, 'GET');
+        email = customer.email ? customer.email.toLowerCase().trim() : null;
+      } catch (e) { console.error('Failed to fetch customer email:', e.message); }
+      if (!email) {
+        console.error('No email found for customer:', ev.customerId);
+        if (ev.eventId) markEventProcessed(ev.eventId);
+        return c.json({ received: true, error: 'no_email' });
+      }
+      upsertSubscriber(email, ev.customerId, ev.subscriptionId, 'pro');
       var code = generateProCode();
-      setProCode(ev.email, code);
-      console.log('Pro activated:', ev.email, 'code:', code);
+      setProCode(email, code);
+      console.log('Pro activated:', email, 'code:', code);
       // Send pro code via email (best-effort)
-      sendProCodeEmail(ev.email, code).catch(function(e) { console.error('Failed to send pro code email:', e.message); });
+      sendProCodeEmail(email, code).catch(function(e) { console.error('Failed to send pro code email:', e.message); });
     } else if (ev.action === 'deactivate') {
       downgradeByCustomerId(ev.customerId);
       console.log('Pro deactivated:', ev.customerId);
+    } else if (ev.action === 'reactivate') {
+      // Re-activate: find subscriber by customer ID, set back to pro
+      var row = db.prepare('SELECT email FROM subscribers WHERE stripe_customer_id = ?').get(ev.customerId);
+      if (row) {
+        upsertSubscriber(row.email, ev.customerId, ev.subscriptionId, 'pro');
+        console.log('Pro reactivated:', row.email);
+      }
+    } else if (ev.action === 'payment_failed') {
+      console.log('Payment failed for customer:', ev.customerId, '— waiting for subscription status change');
     }
 
     if (ev.eventId) markEventProcessed(ev.eventId);

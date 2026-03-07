@@ -31,7 +31,7 @@ function verifySignature(payload, sigHeader, secret) {
   }
 }
 
-async function stripeRequest(path, method, body) {
+export async function stripeRequest(path, method, body) {
   var key = getStripeSecretKey();
   var res = await fetch('https://api.stripe.com/v1' + path, {
     method: method,
@@ -71,12 +71,25 @@ export function parseWebhookEvent(rawBody, signature) {
   var event = JSON.parse(rawBody);
   var eventId = event.id || null;
   switch (event.type) {
-    case 'checkout.session.completed': {
-      var s = event.data.object;
-      return { action: 'activate', eventId: eventId, email: s.customer_email, customerId: s.customer, subscriptionId: s.subscription };
+    case 'customer.subscription.created': {
+      var sub = event.data.object;
+      return { action: 'activate', eventId: eventId, customerId: sub.customer, subscriptionId: sub.id };
     }
     case 'customer.subscription.deleted': {
       return { action: 'deactivate', eventId: eventId, customerId: event.data.object.customer };
+    }
+    case 'customer.subscription.updated': {
+      var sub = event.data.object;
+      // Downgrade on any non-active status (past_due, unpaid, paused, canceled)
+      if (sub.status !== 'active' && sub.status !== 'trialing') {
+        return { action: 'deactivate', eventId: eventId, customerId: sub.customer };
+      }
+      // Re-activate if subscription becomes active again (e.g. payment retry succeeds)
+      return { action: 'reactivate', eventId: eventId, customerId: sub.customer, subscriptionId: sub.id };
+    }
+    case 'invoice.payment_failed': {
+      // Log but don't immediately downgrade — subscription.updated will handle status change
+      return { action: 'payment_failed', eventId: eventId, customerId: event.data.object.customer };
     }
     default:
       return { action: 'none', eventId: eventId };
