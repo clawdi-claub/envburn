@@ -69,7 +69,7 @@ app.use('/api/upgrade', rateLimit({ prefix: 'upgrade', window: 60000, max: 10, m
 
 // --- Limits ---
 var LIMITS = {
-  free:  { maxSize: 100000, maxTTL: 3600, maxViews: 100 },
+  free:  { maxSize: 100000, maxTTL: 3600, maxViews: 3 },
   pro:   { maxSize: 1000000, maxTTL: 30 * 86400, maxViews: 10000 },
 };
 
