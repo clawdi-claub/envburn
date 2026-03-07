@@ -14,112 +14,601 @@
   <link rel="canonical" href="https://envburn.onrender.com">
   <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
   <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#09090b;--surface:#141416;--surface2:#1a1a1e;--border:#27272a;--border-h:#3f3f46;--text:#e4e4e7;--muted:#a1a1aa;--dim:#71717a;--fire:#f97316;--fire-h:#ea580c;--fire-deep:#c2410c;--gold:#fbbf24;--green:#22c55e;--red:#ef4444}
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+    :root {
+      --bg: #0F172A;
+      --surface: #1E293B;
+      --surface-hover: #253349;
+      --border: #334155;
+      --border-subtle: #1E293B;
+      --text: #F8FAFC;
+      --text-secondary: #CBD5E1;
+      --text-muted: #64748B;
+      --accent: #22C55E;
+      --accent-hover: #16A34A;
+      --accent-subtle: rgba(34, 197, 94, 0.1);
+      --accent-border: rgba(34, 197, 94, 0.2);
+      --warning: #F59E0B;
+      --error: #EF4444;
+      --error-bg: rgba(239, 68, 68, 0.08);
+      --error-border: rgba(239, 68, 68, 0.2);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --transition: 200ms ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.6;
+    }
+
+    /* Utility */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px;
+      width: 100%;
+    }
+
+    /* Navigation */
+    .nav {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .nav-brand svg { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color var(--transition);
+      cursor: pointer;
+    }
+    .nav-links a:hover { color: var(--text); }
 
     /* Hero */
-    .hero{text-align:center;padding:80px 20px 32px;position:relative}
-    .hero::before{content:"";position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:700px;height:700px;background:radial-gradient(circle,rgba(249,115,22,0.06) 0%,transparent 70%);pointer-events:none}
-    .badge{display:inline-block;padding:6px 14px;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);border-radius:20px;font-size:13px;color:var(--fire);margin-bottom:20px}
-    h1{font-size:clamp(2.4rem,5vw,3.2rem);font-weight:800;margin-bottom:12px;letter-spacing:-0.02em}
-    h1 span{background:linear-gradient(135deg,#ff6b6b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .tagline{color:var(--muted);font-size:1.1rem;max-width:440px;margin:0 auto;line-height:1.6}
+    .hero {
+      text-align: center;
+      padding: 48px 20px 24px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--accent-subtle);
+      border: 1px solid var(--accent-border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+    .hero-badge svg { width: 14px; height: 14px; }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .hero-tagline {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      max-width: 460px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
 
-    /* Features row */
-    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;max-width:740px;margin:40px auto 48px;padding:0 20px}
-    .feat{text-align:center;padding:20px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
-    .feat-icon{font-size:24px;margin-bottom:8px}
-    .feat h3{font-size:14px;font-weight:700;margin-bottom:4px}
-    .feat p{color:var(--dim);font-size:13px;line-height:1.4}
+    /* Features */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      max-width: 720px;
+      margin: 36px auto 40px;
+      padding: 0 20px;
+    }
+    .feat {
+      text-align: center;
+      padding: 20px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      transition: border-color var(--transition);
+    }
+    .feat:hover { border-color: var(--border); }
+    .feat-icon {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-subtle);
+      border-radius: var(--radius);
+      color: var(--accent);
+    }
+    .feat-icon svg { width: 20px; height: 20px; }
+    .feat h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .feat p {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
 
-    /* Main card */
-    .card{max-width:640px;margin:0 auto 40px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
-    .card h2{font-size:1.3rem;font-weight:700;margin-bottom:16px}
-    textarea{width:100%;min-height:180px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;color:var(--text);font-family:"SF Mono",SFMono-Regular,Consolas,monospace;font-size:13px;resize:vertical;transition:border 0.15s}
-    textarea:focus{outline:none;border-color:var(--fire);box-shadow:0 0 0 3px rgba(249,115,22,0.1)}
-    textarea::placeholder{color:var(--dim)}
+    /* Card */
+    .card {
+      max-width: 720px;
+      margin: 0 auto 40px;
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    /* Textarea */
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      color: var(--text);
+      font-family: 'SF Mono', SFMono-Regular, ui-monospace, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+    textarea::placeholder { color: var(--text-muted); }
 
     /* Controls */
-    .controls{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;align-items:center}
-    .ctrl-group{display:flex;align-items:center;gap:6px}
-    .ctrl-group label{font-size:13px;color:var(--muted)}
-    select,input[type="number"]{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px}
-    select:focus,input[type="number"]:focus{outline:none;border-color:var(--fire)}
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ctrl-group label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    select, input[type="number"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: 'Inter', system-ui, sans-serif;
+      transition: border-color var(--transition);
+      cursor: pointer;
+    }
+    select:focus, input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    input[type="number"] { width: 72px; }
 
     /* Email row */
-    .email-row{margin-top:14px;display:flex;gap:10px;align-items:center}
-    .email-row input{flex:1;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px}
-    .email-row input:focus{outline:none;border-color:var(--fire);box-shadow:0 0 0 3px rgba(249,115,22,0.1)}
-    .email-row input::placeholder{color:var(--dim)}
-    .email-note{font-size:12px;color:var(--dim);margin-top:6px}
-    .email-note a{color:var(--fire);text-decoration:none}
+    .email-row {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .email-input {
+      flex: 1;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Inter', system-ui, sans-serif;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .email-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+    .email-input::placeholder { color: var(--text-muted); }
+    .email-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .email-note a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .email-note a:hover { text-decoration: underline; }
 
-    /* Tier indicator */
-    .tier-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.5px}
-    .tier-badge.free{background:var(--border);color:var(--muted)}
-    .tier-badge.pro{background:var(--fire);color:white}
-    .tier-info{margin-top:8px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);display:none}
+    /* Tier */
+    .tier-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .tier-badge.free { background: var(--border); color: var(--text-muted); }
+    .tier-badge.pro { background: var(--accent); color: var(--bg); }
+    .tier-info {
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: none;
+    }
 
-    /* CTA */
-    .cta{width:100%;margin-top:16px;padding:14px;background:linear-gradient(135deg,var(--fire),var(--fire-deep));color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:transform 0.1s,box-shadow 0.15s}
-    .cta:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(249,115,22,0.3)}
-    .cta:active{transform:translateY(0)}
-    .cta:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+    /* CTA Button */
+    .cta {
+      width: 100%;
+      margin-top: 18px;
+      padding: 14px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Inter', system-ui, sans-serif;
+      cursor: pointer;
+      transition: background var(--transition), transform 100ms ease, box-shadow var(--transition);
+    }
+    .cta:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.25);
+    }
+    .cta:active { transform: translateY(1px); }
+    .cta:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
 
     /* Result */
-    .result{display:none;max-width:640px;margin:0 auto 40px;padding:24px;background:#0d2818;border:1px solid #1d5c35;border-radius:12px;word-break:break-all;animation:fadeIn 0.3s ease}
-    .result.error{background:#2a0a0a;border-color:#5c1d1d}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-    .result h3{margin-bottom:8px}
-    .url-box{background:var(--bg);padding:14px;border-radius:8px;margin:12px 0;font-family:monospace;font-size:13px;color:#4ade80;display:flex;align-items:center;gap:10px}
-    .url-box code{flex:1;word-break:break-all}
-    .copy-btn{background:var(--border);color:var(--text);padding:8px 16px;font-size:13px;font-weight:600;border:1px solid var(--border-h);border-radius:6px;cursor:pointer;white-space:nowrap}
-    .copy-btn:hover{background:var(--border-h)}
-    .copy-btn.copied{background:var(--green);border-color:var(--green);color:var(--bg)}
+    .result {
+      display: none;
+      max-width: 720px;
+      margin: 0 auto 40px;
+      padding: 24px;
+      background: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: var(--radius-lg);
+      animation: fadeIn 0.3s ease;
+    }
+    .result.error {
+      background: var(--error-bg);
+      border-color: var(--error-border);
+    }
+    .result h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .result h3 svg { color: var(--accent); width: 20px; height: 20px; }
+    .result-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .url-box {
+      background: var(--bg);
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .url-box code {
+      flex: 1;
+      word-break: break-all;
+      font-family: 'SF Mono', SFMono-Regular, ui-monospace, Consolas, monospace;
+      font-size: 13px;
+      color: var(--accent);
+    }
+    .copy-btn {
+      background: var(--surface);
+      color: var(--text);
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Inter', system-ui, sans-serif;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .copy-btn:hover { background: var(--surface-hover); border-color: var(--border); }
+    .copy-btn.copied { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .result-meta {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .result-meta svg { width: 14px; height: 14px; }
 
     /* Pricing */
-    .pricing{text-align:center;padding:64px 20px}
-    .pricing h2{font-size:2rem;font-weight:800;margin-bottom:8px;letter-spacing:-0.02em}
-    .pricing .sub{color:var(--muted);margin-bottom:36px;font-size:15px}
-    .plans{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
-    .plan{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:280px;text-align:left}
-    .plan.pro{border-color:var(--fire);position:relative}
-    .plan.pro::after{content:"POPULAR";position:absolute;top:-10px;right:20px;background:var(--fire);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px}
-    .plan h3{font-size:1.2rem;margin-bottom:4px;font-weight:700}
-    .plan .price{font-size:2.5rem;font-weight:800;margin-bottom:4px}
-    .plan.free .price{color:var(--text)}
-    .plan.pro .price{background:linear-gradient(135deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .plan .period{color:var(--dim);font-size:13px;margin-bottom:20px}
-    .plan ul{list-style:none;margin-bottom:24px}
-    .plan li{padding:5px 0;color:var(--muted);font-size:14px}
-    .plan li::before{content:"\2713\00a0 ";color:var(--green);font-weight:700}
-    .plan-btn{display:block;width:100%;padding:12px;border-radius:10px;text-align:center;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;border:none;transition:all 0.15s}
-    .plan-btn.free-btn{background:var(--bg);border:1px solid var(--border);color:var(--text)}
-    .plan-btn.pro-btn{background:linear-gradient(135deg,var(--fire),var(--fire-deep));color:white}
-    .plan-btn.pro-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(249,115,22,0.3)}
+    .pricing-section {
+      text-align: center;
+      padding: 64px 20px;
+    }
+    .pricing-section h2 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .pricing-sub {
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      font-size: 15px;
+    }
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .plan {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      text-align: left;
+      transition: border-color var(--transition);
+    }
+    .plan:hover { border-color: var(--border); }
+    .plan.pro {
+      border-color: var(--accent-border);
+      position: relative;
+    }
+    .plan.pro:hover { border-color: var(--accent); }
+    .plan-label {
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      background: var(--accent);
+      color: var(--bg);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .plan h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .plan-price {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .plan.pro .plan-price { color: var(--accent); }
+    .plan-period {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .plan ul {
+      list-style: none;
+      margin-bottom: 24px;
+    }
+    .plan li {
+      padding: 4px 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .plan li svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .plan-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: var(--radius);
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      font-family: 'Inter', system-ui, sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: all var(--transition);
+    }
+    .plan-btn.free-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .plan-btn.free-btn:hover { border-color: var(--text-muted); }
+    .plan-btn.pro-btn {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .plan-btn.pro-btn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+    }
 
     /* Footer */
-    footer{text-align:center;padding:40px 20px;border-top:1px solid var(--border);color:var(--dim);font-size:13px;margin-top:auto}
+    footer {
+      text-align: center;
+      padding: 32px 20px;
+      border-top: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: auto;
+      line-height: 1.6;
+    }
+    footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+    footer a:hover { color: var(--text); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .features { grid-template-columns: 1fr; gap: 8px; }
+      .plans { grid-template-columns: 1fr; }
+      .card { padding: 20px; }
+      .hero { padding: 32px 20px 16px; }
+      .controls { flex-direction: column; align-items: stretch; }
+      .ctrl-group { justify-content: space-between; }
+      select, input[type="number"] { flex: 1; }
+      .url-box { flex-direction: column; align-items: stretch; }
+      .copy-btn { text-align: center; }
+      .nav-links { gap: 16px; }
+    }
+
+    @media (min-width: 641px) and (max-width: 1024px) {
+      .features { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="badge">&#128274; Zero-knowledge encryption</div>
-  <h1>&#128293; <span>EnvBurn</span></h1>
-  <p class="tagline">Share secrets through encrypted, self-destructing links. Your data never touches our server in plaintext.</p>
+<nav class="nav">
+  <a href="/" class="nav-brand">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+    EnvBurn
+  </a>
+  <div class="nav-links">
+    <a href="#pricing">Pricing</a>
+    <a href="https://github.com/clawdi-claub/envburn" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Zero-knowledge encryption
+  </div>
+  <h1>Share secrets that self-destruct</h1>
+  <p class="hero-tagline">Encrypted, self-destructing links for API keys, .env files, and passwords. Your data never touches our server in plaintext.</p>
+</section>
+
+<div class="features container">
+  <div class="feat">
+    <div class="feat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+    </div>
+    <h3>Client-Side Encryption</h3>
+    <p>NaCl encryption runs in your browser</p>
+  </div>
+  <div class="feat">
+    <div class="feat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <h3>Auto-Destruct</h3>
+    <p>Burns after reading or on a timer</p>
+  </div>
+  <div class="feat">
+    <div class="feat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="11" y2="11"/></svg>
+    </div>
+    <h3>No Signup Required</h3>
+    <p>Start sharing instantly, free tier</p>
+  </div>
 </div>
 
-<div class="features">
-  <div class="feat"><div class="feat-icon">&#128274;</div><h3>Client-Side Encryption</h3><p>NaCl encryption in your browser</p></div>
-  <div class="feat"><div class="feat-icon">&#9203;</div><h3>Auto-Destruct</h3><p>Burns after reading or on timer</p></div>
-  <div class="feat"><div class="feat-icon">&#128683;</div><h3>Zero Signup</h3><p>No accounts required for free tier</p></div>
-</div>
-
-<div class="card" id="createForm">
-  <h2>Share a Secret</h2>
+<div class="card container" id="createForm">
+  <h2 class="card-title">Share a Secret</h2>
   <textarea id="secretContent" placeholder="Paste your .env, API keys, or secrets here...
 
 DATABASE_URL=postgres://user:pass@localhost/db
@@ -128,7 +617,7 @@ JWT_SECRET=your-jwt-secret"></textarea>
 
   <div class="controls">
     <div class="ctrl-group">
-      <label>Expires:</label>
+      <label for="ttl">Expires:</label>
       <select id="ttl">
         <option value="300">5 min</option>
         <option value="900">15 min</option>
@@ -139,66 +628,103 @@ JWT_SECRET=your-jwt-secret"></textarea>
       </select>
     </div>
     <div class="ctrl-group">
-      <label>Views:</label>
+      <label for="views">Views:</label>
       <input type="number" id="views" value="1" min="1" max="100">
     </div>
   </div>
 
   <div class="email-row">
-    <input type="email" id="userEmail" placeholder="your@email.com (optional — unlocks Pro limits)">
+    <input type="email" id="userEmail" class="email-input" placeholder="your@email.com (optional — unlocks Pro limits)">
   </div>
-  <div class="email-note">Enter your email to check Pro status or <a href="#pricing">upgrade for $2/mo</a></div>
+  <p class="email-note">Enter your email to check Pro status or <a href="#pricing">upgrade for $2/mo</a></p>
   <div class="tier-info" id="tierInfo"></div>
 
-  <button class="cta" onclick="createSecret()" id="createBtn">Create Secret Link &rarr;</button>
+  <button class="cta" onclick="createSecret()" id="createBtn">
+    Create Secret Link
+  </button>
 </div>
 
-<div id="result" class="result"></div>
+<div id="result" class="result container"></div>
 
-<div class="pricing" id="pricing">
+<section class="pricing-section" id="pricing">
   <h2>Simple Pricing</h2>
-  <p class="sub">Free for basic use. Pro for power users and teams.</p>
+  <p class="pricing-sub">Free for personal use. Pro for power users and teams.</p>
   <div class="plans">
     <div class="plan free">
       <h3>Free</h3>
-      <div class="price">$0</div>
-      <div class="period">forever</div>
+      <div class="plan-price">$0</div>
+      <div class="plan-period">forever</div>
       <ul>
-        <li>Unlimited secrets</li>
-        <li>7-day max expiry</li>
-        <li>100KB max size</li>
-        <li>Up to 100 views</li>
-        <li>Client-side encryption</li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Unlimited secrets
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          7-day max expiry
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          100KB max size
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Up to 100 views
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Client-side encryption
+        </li>
       </ul>
       <a href="#createForm" class="plan-btn free-btn">Start Free</a>
     </div>
     <div class="plan pro">
+      <span class="plan-label">Popular</span>
       <h3>Pro</h3>
-      <div class="price">$2</div>
-      <div class="period">per month</div>
+      <div class="plan-price">$2</div>
+      <div class="plan-period">per month</div>
       <ul>
-        <li>Unlimited secrets</li>
-        <li>30-day max expiry</li>
-        <li>1MB max size</li>
-        <li>Up to 10,000 views</li>
-        <li>Client-side encryption</li>
-        <li>Password protection</li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Unlimited secrets
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          30-day max expiry
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          1MB max size
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Up to 10,000 views
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Password protection
+        </li>
       </ul>
-      <button class="plan-btn pro-btn" onclick="upgrade()">Upgrade to Pro &rarr;</button>
+      <button class="plan-btn pro-btn" onclick="upgrade()">Upgrade to Pro</button>
     </div>
   </div>
-</div>
+</section>
 
 <footer>
-  <p>&#128293; EnvBurn &mdash; The secret you share disappears forever after it's read</p>
-  <p style="margin-top:6px">Zero knowledge &bull; Open source &bull; Built for developers</p>
+  <p>EnvBurn &mdash; Secrets that disappear after they're read</p>
+  <p style="margin-top:6px">
+    <a href="https://github.com/clawdi-claub/envburn">Open Source</a>
+    &nbsp;&middot;&nbsp;
+    Zero Knowledge
+    &nbsp;&middot;&nbsp;
+    Built for Developers
+  </p>
 </footer>
 
 <script>
 var API_URL = window.location.origin;
 var currentTier = 'free';
 
-// Check tier when email changes
 var emailEl = document.getElementById('userEmail');
 var debounceTimer;
 emailEl.addEventListener('input', function() {
@@ -222,7 +748,7 @@ function checkTier(email) {
         info.innerHTML = '<span class="tier-badge pro">PRO</span> Max size: 1MB &bull; Max TTL: 30 days &bull; Views: 10,000';
       } else {
         setTier('free');
-        info.innerHTML = '<span class="tier-badge free">FREE</span> Max size: 100KB &bull; Max TTL: 7 days &bull; <a href="#pricing" style="color:var(--fire)">Upgrade to Pro</a>';
+        info.innerHTML = '<span class="tier-badge free">FREE</span> Max size: 100KB &bull; Max TTL: 7 days &bull; <a href="#pricing" style="color:var(--accent)">Upgrade to Pro</a>';
       }
       info.style.display = 'block';
     })
@@ -260,7 +786,7 @@ async function createSecret() {
   }
 
   btn.disabled = true;
-  btn.textContent = 'Creating...';
+  btn.textContent = 'Creating\u2026';
 
   try {
     var body = { content: content, ttl: ttl, views: views, burnAfterRead: views === 1 };
@@ -275,28 +801,31 @@ async function createSecret() {
     var data = await response.json();
 
     if (response.ok) {
-      resultDiv.className = 'result';
       var tierLabel = data.tier === 'pro' ? ' <span class="tier-badge pro">PRO</span>' : '';
-      resultDiv.innerHTML = '<h3>&#9989; Secret Created!' + tierLabel + '</h3>'
-        + '<p style="color:var(--muted);margin-bottom:8px">Share this link. It '
-        + (views === 1 ? 'will self-destruct after first view.' : 'allows ' + views + ' views.')
-        + '</p>'
+      var viewsText = views === 1
+        ? 'It will self-destruct after first view.'
+        : 'It allows ' + views + ' views.';
+
+      resultDiv.className = 'result container';
+      resultDiv.innerHTML =
+        '<h3><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Secret Created' + tierLabel + '</h3>'
+        + '<p class="result-subtitle">' + viewsText + '</p>'
         + '<div class="url-box"><code id="secretUrl">' + data.url + '</code>'
         + '<button class="copy-btn" id="copyBtn" onclick="copyUrl()">Copy</button></div>'
-        + '<p style="color:var(--dim);font-size:13px">&#9203; Expires: ' + new Date(data.expiresAt).toLocaleString() + '</p>';
+        + '<p class="result-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Expires: ' + new Date(data.expiresAt).toLocaleString() + '</p>';
       resultDiv.style.display = 'block';
       resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      btn.textContent = '\u2713 Created!';
-      btn.style.background = 'var(--green)';
+      btn.textContent = 'Created';
+      btn.style.background = 'var(--accent)';
     } else {
       throw new Error(data.error || 'Failed to create secret');
     }
   } catch (err) {
-    resultDiv.className = 'result error';
+    resultDiv.className = 'result container error';
     resultDiv.innerHTML = '<strong>Error:</strong> ' + err.message;
     resultDiv.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Create Secret Link \u2192';
+    btn.textContent = 'Create Secret Link';
   }
 }
 
@@ -313,7 +842,7 @@ function upgrade() {
   var email = document.getElementById('userEmail').value.trim();
   if (!email || email.indexOf('@') === -1) {
     document.getElementById('userEmail').focus();
-    document.getElementById('userEmail').style.borderColor = 'var(--fire)';
+    document.getElementById('userEmail').style.borderColor = 'var(--accent)';
     alert('Enter your email first, then click Upgrade.');
     return;
   }

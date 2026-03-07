@@ -4,103 +4,368 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — EnvBurn</title>
+  <meta name="description" content="EnvBurn pricing — free for personal use, $2/mo Pro for power users.">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0F172A;
+      --surface: #1E293B;
+      --surface-hover: #253349;
+      --border: #334155;
+      --border-subtle: #1E293B;
+      --text: #F8FAFC;
+      --text-secondary: #CBD5E1;
+      --text-muted: #64748B;
+      --accent: #22C55E;
+      --accent-hover: #16A34A;
+      --accent-subtle: rgba(34, 197, 94, 0.1);
+      --accent-border: rgba(34, 197, 94, 0.2);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --transition: 200ms ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      color: #fff;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    /* Nav */
+    .nav {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .nav-brand svg { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color var(--transition);
+      cursor: pointer;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* Page */
+    .page {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
-    }
-    .container { max-width: 900px; width: 100%; }
-    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; text-align: center; }
-    .subtitle { text-align: center; color: #888; margin-bottom: 3rem; }
-    .pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-    .card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 2rem;
+      justify-content: center;
+      padding: 48px 20px 64px;
       text-align: center;
     }
-    .card.featured { border-color: #ff6b6b; background: rgba(255,107,107,0.1); }
-    .plan-name { font-size: 1.5rem; margin-bottom: 0.5rem; }
-    .price { font-size: 3rem; font-weight: bold; margin: 1rem 0; }
-    .price span { font-size: 1rem; color: #888; }
-    .features { list-style: none; margin: 1.5rem 0; }
-    .features li { padding: 0.5rem 0; color: #ccc; }
-    .btn {
-      background: #ff6b6b;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 0.75rem 2rem;
-      font-size: 1rem;
+    .page h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin-bottom: 40px;
+      max-width: 420px;
+    }
+
+    /* Plans */
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 600px;
+      width: 100%;
+    }
+    .plan {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      text-align: left;
+      transition: border-color var(--transition);
+    }
+    .plan:hover { border-color: var(--border); }
+    .plan.pro {
+      border-color: var(--accent-border);
+      position: relative;
+    }
+    .plan.pro:hover { border-color: var(--accent); }
+    .plan-label {
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      background: var(--accent);
+      color: var(--bg);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .plan h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .plan-price {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .plan.pro .plan-price { color: var(--accent); }
+    .plan-period {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .plan ul { list-style: none; margin-bottom: 24px; }
+    .plan li {
+      padding: 4px 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .plan li svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .plan-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: var(--radius);
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      font-family: 'Inter', system-ui, sans-serif;
       cursor: pointer;
       text-decoration: none;
-      display: inline-block;
+      border: none;
+      transition: all var(--transition);
     }
-    .btn:hover { opacity: 0.9; }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid #ff6b6b;
+    .plan-btn.free-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
     }
-    .footer { margin-top: 3rem; text-align: center; color: #666; }
-    a { color: #ff6b6b; }
+    .plan-btn.free-btn:hover { border-color: var(--text-muted); }
+    .plan-btn.pro-btn {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .plan-btn.pro-btn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+    }
+
+    /* FAQ */
+    .faq {
+      max-width: 600px;
+      width: 100%;
+      margin-top: 56px;
+      text-align: left;
+    }
+    .faq h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .faq-item {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .faq-item:first-of-type { border-top: 1px solid var(--border-subtle); }
+    .faq-q {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .faq-a {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 32px 20px;
+      border-top: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+    footer a:hover { color: var(--text); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .plans { grid-template-columns: 1fr; }
+      .plan { padding: 24px; }
+      .nav-links { gap: 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🔥 EnvBurn</h1>
-    <p class="subtitle">Simple, self-destructing secrets</p>
-    
-    <div class="pricing">
-      <div class="card">
-        <div class="plan-name">Free</div>
-        <div class="price">$0</div>
-        <ul class="features">
-          <li>10 secrets / month</li>
-          <li>24hr max expiry</li>
-          <li>1 view per secret</li>
-          <li>No signup required</li>
-        </ul>
-        <a href="/" class="btn btn-outline">Get Started</a>
-      </div>
-      
-      <div class="card featured">
-        <div class="plan-name">Pro</div>
-        <div class="price">$9<span>/mo</span></div>
-        <ul class="features">
-          <li>Unlimited secrets</li>
-          <li>7 day expiry</li>
-          <li>Custom view limits</li>
-          <li>API access</li>
-          <li>Priority support</li>
-        </ul>
-        <a href="#" class="btn">Coming Soon</a>
-      </div>
-      
-      <div class="card">
-        <div class="plan-name">Team</div>
-        <div class="price">$29<span>/mo</span></div>
-        <ul class="features">
-          <li>Everything in Pro</li>
-          <li>Team sharing</li>
-          <li>Audit logs</li>
-          <li>CLI tool</li>
-          <li>Custom domains</li>
-        </ul>
-        <a href="#" class="btn btn-outline">Coming Soon</a>
-      </div>
+
+<nav class="nav">
+  <a href="/" class="nav-brand">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+    EnvBurn
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="https://github.com/clawdi-claub/envburn" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</nav>
+
+<main class="page">
+  <h1>Simple Pricing</h1>
+  <p class="page-sub">Free for personal use. Pro when you need longer expiry, larger secrets, and password protection.</p>
+
+  <div class="plans">
+    <div class="plan free">
+      <h3>Free</h3>
+      <div class="plan-price">$0</div>
+      <div class="plan-period">forever</div>
+      <ul>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Unlimited secrets
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          7-day max expiry
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          100KB max size
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Up to 100 views
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Client-side encryption
+        </li>
+      </ul>
+      <a href="/" class="plan-btn free-btn">Start Free</a>
     </div>
-    
-    <div class="footer">
-      <p><a href="/">← Back to app</a></p>
+    <div class="plan pro">
+      <span class="plan-label">Popular</span>
+      <h3>Pro</h3>
+      <div class="plan-price">$2</div>
+      <div class="plan-period">per month</div>
+      <ul>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Unlimited secrets
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          30-day max expiry
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          1MB max size
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Up to 10,000 views
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Password protection
+        </li>
+      </ul>
+      <button class="plan-btn pro-btn" onclick="upgrade()">Upgrade to Pro</button>
     </div>
   </div>
+
+  <div class="faq">
+    <h2>Questions</h2>
+    <div class="faq-item">
+      <div class="faq-q">How does the encryption work?</div>
+      <div class="faq-a">Secrets are encrypted with NaCl (TweetNaCl.js) entirely in your browser before being sent to our server. The decryption key lives in the URL fragment and never reaches our server.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">What happens when a secret is viewed?</div>
+      <div class="faq-a">If burn-after-read is enabled (1 view), the encrypted data is permanently deleted from our database after the first view. Multi-view secrets decrement until they hit zero.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I cancel Pro anytime?</div>
+      <div class="faq-a">Yes. Pro is billed monthly through Stripe. Cancel anytime and you keep Pro access until the end of your billing period.</div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p><a href="/">EnvBurn</a> &middot; Zero-knowledge secret sharing &middot; <a href="https://github.com/clawdi-claub/envburn">Open Source</a></p>
+</footer>
+
+<script>
+function upgrade() {
+  var email = prompt('Enter your email to upgrade:');
+  if (!email || email.indexOf('@') === -1) return;
+  fetch(window.location.origin + '/api/upgrade', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.url) window.location.href = d.url;
+    else alert(d.error || 'Upgrade not available yet');
+  })
+  .catch(function(e) { alert('Error: ' + e.message); });
+}
+</script>
 </body>
 </html>
