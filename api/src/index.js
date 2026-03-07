@@ -127,6 +127,19 @@ app.post('/api/account/check', async function(c) {
   });
 });
 
+// GET /api/account/:email - Check tier by email (for client-side validation)
+app.get('/api/account/:email', async function(c) {
+  var email = c.req.param('email');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    return c.json({ error: 'Valid email required' }, 400);
+  }
+  email = email.toLowerCase().trim();
+  return c.json({
+    tier: isPro(email) ? 'pro' : 'free',
+    limits: getLimits(email),
+  });
+});
+
 // --- Create a secret ---
 app.post('/api/secrets', async function(c) {
   var body = await c.req.json();
@@ -279,11 +292,11 @@ app.get('/pro/success', function(c) {
   return c.html([
     '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EnvBurn Pro — Activated</title>',
     '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
-    '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">',
+    '<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">',
     '<style>',
     ':root{--bg:#0F172A;--surface:#1E293B;--border:#334155;--text:#F8FAFC;--text-secondary:#CBD5E1;--text-muted:#64748B;--accent:#22C55E;--accent-subtle:rgba(34,197,94,0.1);--radius-lg:16px}',
     '*{margin:0;padding:0;box-sizing:border-box}',
-    'body{font-family:"Inter",system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}',
+    'body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}',
     '.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px;text-align:center;max-width:480px;width:100%;animation:fadeIn .4s ease}',
     '.icon{width:64px;height:64px;background:var(--accent-subtle);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}',
     '.icon svg{color:var(--accent);width:32px;height:32px}',
@@ -294,7 +307,7 @@ app.get('/pro/success', function(c) {
     '.features li:last-child{border-bottom:none}',
     '.features li svg{color:var(--accent);width:16px;height:16px;flex-shrink:0}',
     '.note{color:var(--text-muted);font-size:13px;margin-top:20px;line-height:1.6}',
-    '.cta{display:inline-flex;align-items:center;gap:8px;margin-top:24px;padding:12px 28px;background:var(--accent);color:var(--bg);font-size:14px;font-weight:700;font-family:"Inter",system-ui,sans-serif;border:none;border-radius:10px;text-decoration:none;cursor:pointer;transition:background .2s}',
+    '.cta{display:inline-flex;align-items:center;gap:8px;margin-top:24px;padding:12px 28px;background:var(--accent);color:var(--bg);font-size:14px;font-weight:700;font-family:"Plus Jakarta Sans",system-ui,sans-serif;border:none;border-radius:10px;text-decoration:none;cursor:pointer;transition:background .2s}',
     '.cta:hover{background:#16A34A}',
     '@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}',
     '</style></head><body>',

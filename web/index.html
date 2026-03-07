@@ -270,6 +270,24 @@
     }
     .email-clear {
       position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+      display: none;
+    }
+    .email-clear:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    .email-clear {
+      position: absolute;
       right: 10px;
       top: 50%;
       transform: translateY(-50%);
@@ -1049,6 +1067,59 @@ function upgrade() {
   })
   .catch(function(e) { alert('Error: ' + e.message); });
 }
+
+// Cookie management (base64 encoded)
+function saveEmailCookie(email) {
+  var encoded = btoa(email);
+  document.cookie = 'envburn_email=' + encoded + ';path=/;max-age=2592000'; // 30 days
+}
+
+function readEmailCookie() {
+  var match = document.cookie.match(/(?:^|; )envburn_email=([^;]*)/);
+  if (match) {
+    try { return atob(match[1]); } catch(e) { return null; }
+  }
+  return null;
+}
+
+function clearEmailCookie() {
+  document.cookie = 'envburn_email=;path=/;max-age=0';
+}
+
+function updateClearButton() {
+  var emailField = document.getElementById('userEmail');
+  var clearBtn = document.getElementById('emailClear');
+  if (clearBtn && emailField) {
+    clearBtn.style.display = isValidEmail(emailField.value) ? 'block' : 'none';
+  }
+}
+
+function clearEmail() {
+  var emailField = document.getElementById('userEmail');
+  if (!emailField) return;
+  emailField.value = '';
+  clearEmailCookie();
+  updateClearButton();
+  emailField.focus();
+  document.getElementById('tierInfo').style.display = 'none';
+  setTier('free');
+}
+
+// Initialize on page load
+(function init() {
+  var emailField = document.getElementById('userEmail');
+  if (!emailField) return;
+  
+  var savedEmail = readEmailCookie();
+  if (savedEmail) {
+    emailField.value = savedEmail;
+    checkTier(savedEmail);
+    updateClearButton();
+  }
+  
+  emailField.addEventListener('input', updateClearButton);
+})();
+
 </script>
 </body>
 </html>
