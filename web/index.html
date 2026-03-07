@@ -547,6 +547,26 @@
       color: var(--bg);
     }
     .plan-btn.pro-btn:hover {
+
+    /* Free plan link - looks like text with icon, not a button */
+    .plan-link-free {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 8px 0;
+      transition: color 0.2s;
+    }
+    .plan-link-free:hover {
+      color: var(--text);
+    }
+    .plan-link-free svg {
+      width: 16px;
+      height: 16px;
+    }
       background: var(--accent-hover);
       box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
     }
@@ -662,7 +682,17 @@ JWT_SECRET=your-jwt-secret"></textarea>
     </div>
     <div class="ctrl-group">
       <label for="views">Views:</label>
-      <input type="number" id="views" value="1" min="1" max="3">
+      <select id="views">
+        <option value="1" selected>1 view</option>
+        <option value="3">3 views</option>
+        <option value="5">5 views</option>
+        <option value="10">10 views</option>
+        <option value="20">20 views</option>
+        <option value="50">50 views</option>
+        <option value="100" disabled id="views-100">100 views (Pro)</option>
+        <option value="1000" disabled id="views-1000">1,000 views (Pro)</option>
+        <option value="10000" disabled id="views-10000">10,000 views (Pro)</option>
+      </select>
     </div>
   </div>
 
@@ -709,7 +739,7 @@ JWT_SECRET=your-jwt-secret"></textarea>
           Client-side encryption
         </li>
       </ul>
-      <a href="#createForm" class="plan-btn free-btn">Start Free</a>
+      <a href="#createForm" class="plan-link-free"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14/><path d="m12 5 7 7-7 7/></svg> Free plan</a>
     </div>
     <div class="plan pro">
       <span class="plan-label">Popular</span>
@@ -793,22 +823,28 @@ function setTier(tier) {
   var opt24h = document.getElementById('ttl-24h');
   var opt7d = document.getElementById('ttl-7d');
   var opt30d = document.getElementById('ttl-30d');
+  var views100 = document.getElementById('views-100');
+  var views1000 = document.getElementById('views-1000');
+  var views10000 = document.getElementById('views-10000');
   if (tier === 'pro') {
     opt24h.disabled = false; opt24h.textContent = '24 hours';
     opt7d.disabled = false; opt7d.textContent = '7 days';
     opt30d.disabled = false; opt30d.textContent = '30 days';
-    document.getElementById('views').max = 10000;
+    views100.disabled = false; views100.textContent = '100 views';
+    views1000.disabled = false; views1000.textContent = '1,000 views';
+    views10000.disabled = false; views10000.textContent = '10,000 views';
   } else {
     opt24h.disabled = true; opt24h.textContent = '24 hours (Pro)';
     opt7d.disabled = true; opt7d.textContent = '7 days (Pro)';
     opt30d.disabled = true; opt30d.textContent = '30 days (Pro)';
-    document.getElementById('views').max = 3;
+    views100.disabled = true; views100.textContent = '100 views (Pro)';
+    views1000.disabled = true; views1000.textContent = '1,000 views (Pro)';
+    views10000.disabled = true; views10000.textContent = '10,000 views (Pro)';
     // Reset TTL selection if a Pro-only option was selected
     var ttlVal = parseInt(document.getElementById('ttl').value);
     if (ttlVal > 3600) document.getElementById('ttl').value = '3600';
-    if (parseInt(document.getElementById('views').value) > 3) {
-      document.getElementById('views').value = 3;
-    }
+    var viewsVal = parseInt(document.getElementById('views').value);
+    if (viewsVal > 3) document.getElementById('views').value = '3';
   }
 }
 
